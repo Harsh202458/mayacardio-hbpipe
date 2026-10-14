@@ -1,0 +1,4 @@
+#!/bin/sh
+# Wrapper installed as /usr/local/bin/pipeline
+HB_HOME="${HB_HOME:-/opt/hbpipe}"
+PYTHONPATH="$HB_HOME${PYTHONPATH:+:$PYTHONPATH}" exec python3 -m hbpipe.device.cli "$@"

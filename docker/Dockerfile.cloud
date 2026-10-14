@@ -1,0 +1,9 @@
+# Cloud side as a container (mirrors the Render deployment: same code, Postgres storage).
+FROM python:3.11-slim
+WORKDIR /opt/hbpipe
+COPY requirements-cloud.txt .
+RUN pip install --no-cache-dir -r requirements-cloud.txt
+COPY hbpipe ./hbpipe
+ENV PYTHONUNBUFFERED=1
+EXPOSE 8080
+CMD ["python", "-m", "hbpipe.cloud.server", "--host", "0.0.0.0", "--port", "8080"]

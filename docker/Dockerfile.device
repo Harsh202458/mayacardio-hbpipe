@@ -1,0 +1,16 @@
+# ARM64 "Raspberry Pi-class" device: Debian 12 Bookworm (same base as Raspberry Pi OS Bookworm).
+#   docker build --platform linux/arm64 -f docker/Dockerfile.device -t hbpipe-device .
+FROM --platform=linux/arm64 debian:bookworm-slim
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends python3 iptables iproute2 procps ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
+WORKDIR /opt/hbpipe
+COPY hbpipe ./hbpipe
+COPY tools ./tools
+COPY tests ./tests
+COPY bin/pipeline /usr/local/bin/pipeline
+COPY docker/device-entry.sh /usr/local/bin/device-entry
+RUN chmod +x /usr/local/bin/pipeline /usr/local/bin/device-entry
+ENV HB_HOME=/opt/hbpipe HB_DATA_DIR=/data HB_CONFIG=/nonexistent PYTHONUNBUFFERED=1
+VOLUME /data
+CMD ["device-entry"]

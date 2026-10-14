@@ -1,0 +1,15 @@
+[Unit]
+Description=hbpipe cloud API + online worker
+After=network.target
+
+[Service]
+Type=simple
+User=hbcloud
+EnvironmentFile=/etc/hbcloud/cloud.env
+Environment=PYTHONPATH=/opt/hbpipe
+ExecStart=/usr/bin/python3 -m hbpipe.cloud.server --db /var/lib/hbcloud/cloud.db --host 127.0.0.1 --port 8080
+Restart=always
+RestartSec=1
+
+[Install]
+WantedBy=multi-user.target

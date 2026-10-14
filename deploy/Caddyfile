@@ -1,0 +1,5 @@
+# Replace with your free hostname, e.g. 203-0-113-7.sslip.io or yourname.duckdns.org.
+# Caddy obtains and renews a Let's Encrypt certificate automatically.
+YOUR_HOSTNAME {
+    reverse_proxy 127.0.0.1:8080
+}

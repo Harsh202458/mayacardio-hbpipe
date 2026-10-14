@@ -1,0 +1,17 @@
+# Render Blueprint: free web service for the cloud side. Storage is Neon Postgres (free tier),
+# because Render's free instances have no persistent disk.
+services:
+  - type: web
+    name: hbpipe-cloud
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements-cloud.txt
+    startCommand: python -m hbpipe.cloud.server --host 0.0.0.0
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.9"
+      - key: HB_CLOUD_DB          # Neon connection string: postgresql://...?sslmode=require
+        sync: false
+      - key: HB_CLOUD_TOKEN       # shared secret, also set on the device
+        generateValue: true

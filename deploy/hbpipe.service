@@ -1,0 +1,22 @@
+[Unit]
+Description=hbpipe - never-lose-a-heartbeat pipeline (device)
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=hbpipe
+EnvironmentFile=/etc/hbpipe/pipeline.env
+Environment=HB_HOME=/opt/hbpipe
+ExecStart=/usr/local/bin/pipeline run
+Restart=always
+RestartSec=1
+# Resource envelope of the brief (criterion 8): at most 4 cores and 2 GB.
+CPUQuota=400%
+MemoryMax=2G
+# Keep collecting even when the system is under memory pressure.
+OOMScoreAdjust=-500
+TimeoutStopSec=5
+
+[Install]
+WantedBy=multi-user.target
