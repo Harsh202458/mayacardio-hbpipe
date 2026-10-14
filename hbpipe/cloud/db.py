@@ -65,7 +65,10 @@ class PgConn:
                 self.c.close()
             except Exception:  # noqa: BLE001
                 pass
-        self.c = self._psycopg.connect(self.url, autocommit=True, connect_timeout=10)
+        # prepare_threshold=None: no server-side prepared statements, so a pooled (PgBouncer)
+        # Neon connection string works as well as a direct one.
+        self.c = self._psycopg.connect(self.url, autocommit=True, connect_timeout=10,
+                                       prepare_threshold=None)
 
     def _ensure(self):
         if self.c is None or self.c.closed or self.c.broken:

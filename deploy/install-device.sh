@@ -17,6 +17,7 @@ id hbpipe >/dev/null 2>&1 || useradd --system --home /var/lib/hbpipe --shell /us
 install -d -o hbpipe -g hbpipe -m 750 /var/lib/hbpipe
 install -d -m 755 /opt/hbpipe /etc/hbpipe
 rm -rf /opt/hbpipe/hbpipe && cp -r "$SRC/hbpipe" /opt/hbpipe/
+python3 -m compileall -q /opt/hbpipe/hbpipe   # bytecode ready: faster restart after a crash
 install -m 755 "$SRC/bin/pipeline" /usr/local/bin/pipeline
 
 if [ ! -f /etc/hbpipe/pipeline.env ]; then

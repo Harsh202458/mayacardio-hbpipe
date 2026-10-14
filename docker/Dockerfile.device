@@ -10,7 +10,8 @@ COPY tools ./tools
 COPY tests ./tests
 COPY bin/pipeline /usr/local/bin/pipeline
 COPY docker/device-entry.sh /usr/local/bin/device-entry
-RUN chmod +x /usr/local/bin/pipeline /usr/local/bin/device-entry
+RUN chmod +x /usr/local/bin/pipeline /usr/local/bin/device-entry \
+ && python3 -m compileall -q /opt/hbpipe/hbpipe /opt/hbpipe/tools
 ENV HB_HOME=/opt/hbpipe HB_DATA_DIR=/data HB_CONFIG=/nonexistent PYTHONUNBUFFERED=1
 VOLUME /data
 CMD ["device-entry"]

@@ -98,7 +98,10 @@ class Env:
         if self.cloud_ip is None:
             self.cloud_ip = dexec(f"getent hosts {CLOUD} | awk '{{print $1}}'")
         op = "-I" if cut else "-D"
-        dexec(f"iptables {op} OUTPUT -d {self.cloud_ip} -j DROP")
+        # iptables cannot run under ARM64 emulation; a native helper applies the same DROP rule
+        # inside the device's network namespace (packets to the cloud silently vanish).
+        sh("docker", "run", "--rm", "--net", f"container:{DEV}", "--cap-add", "NET_ADMIN",
+           "hbpipe-netctl", "iptables", op, "OUTPUT", "-d", self.cloud_ip, "-j", "DROP")
         self.log(f"network {'CUT' if cut else 'RESTORED'} ({self.cloud_ip})")
 
     def kill_pipeline(self):

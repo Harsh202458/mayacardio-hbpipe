@@ -1,27 +1,25 @@
 """`pipeline` command: run | status | export | results | sessions."""
 from __future__ import annotations
 
-import argparse
 import json
 import logging
 import os
 import signal
 import sys
 import threading
-import urllib.parse
 
-from ..common.chunkdb import export_lines, get_meta, result_line
-from .collector import Collector
 from .config import Config
-from .events import EventLog
-from .processor import OfflineProcessor
-from .store import DeviceStore
-from .uplink import CloudClient, ModeManager, Uploader
 
 log = logging.getLogger("hbpipe")
 
 
-def cmd_run(cfg: Config, _args) -> int:
+def cmd_run(cfg: Config, _args=None) -> int:
+    """Start collecting before anything else is even imported: after a crash, the time until
+    the first read decides whether the mock's 10 s buffer still holds the unread data."""
+    from .collector import Collector
+    from .events import EventLog
+    from .store import DeviceStore
+
     logging.basicConfig(level=logging.INFO, stream=sys.stderr,
                         format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     stop = threading.Event()
@@ -37,28 +35,45 @@ def cmd_run(cfg: Config, _args) -> int:
     events = EventLog(os.path.join(cfg.data_dir, "events.jsonl"))
     events.write("start", pid=os.getpid())
     collector = Collector(cfg, store, events, stop)
-    threads = []
+    failure = {}
+
+    def collect():
+        try:
+            collector.run()
+        except BaseException as e:  # noqa: BLE001 - surface as the process exit code
+            failure["exc"] = e
+            log.exception("collector stopped")
+        finally:
+            stop.set()
+
+    ct = threading.Thread(target=collect, name="collector")
+    ct.start()
+
+    # Cloud link and offline processing start once collection is already running.
+    from .processor import OfflineProcessor
     if cfg.cloud_url:
+        from .uplink import CloudClient, ModeManager, Uploader
         client = CloudClient(cfg.cloud_url, cfg.cloud_token)
         mode = ModeManager(client, store, events, stop)
-        threads += [threading.Thread(target=mode.run, name="mode", daemon=True),
-                    threading.Thread(target=Uploader(cfg, client, store, mode, stop).run,
-                                     name="uploader", daemon=True)]
+        threading.Thread(target=mode.run, name="mode", daemon=True).start()
+        threading.Thread(target=Uploader(cfg, client, store, mode, stop).run,
+                         name="uploader", daemon=True).start()
     else:
         log.warning("HB_CLOUD_URL not set: running offline only")
         mode = type("Offline", (), {"mode": "offline"})()
-    threads.append(threading.Thread(target=OfflineProcessor(store, mode, stop).run,
-                                    name="processor", daemon=True))
-    for t in threads:
-        t.start()
-    try:
-        collector.run()  # the collector owns the main thread; it must never wait on the others
-    finally:
-        stop.set()
-    return 0
+    threading.Thread(target=OfflineProcessor(store, mode, stop).run,
+                     name="processor", daemon=True).start()
+
+    while ct.is_alive():
+        ct.join(0.5)  # short joins keep the main thread responsive to signals
+    exc = failure.get("exc")
+    if isinstance(exc, SystemExit):
+        return exc.code if isinstance(exc.code, int) else 1
+    return 1 if exc else 0
 
 
-def _client(cfg: Config) -> CloudClient:
+def _client(cfg: Config) -> "CloudClient":
+    from .uplink import CloudClient
     if not cfg.cloud_url:
         raise SystemExit("HB_CLOUD_URL is not configured")
     return CloudClient(cfg.cloud_url, cfg.cloud_token)
@@ -72,6 +87,8 @@ def _session(store: DeviceStore, sid: str) -> str:
 
 
 def cmd_status(cfg: Config, _args) -> int:
+    from ..common.chunkdb import get_meta
+    from .store import DeviceStore
     store = DeviceStore(cfg.data_dir, readonly=True)
     c = store.conn
     out = {"mode": get_meta(c, "mode", "offline"),
@@ -83,6 +100,9 @@ def cmd_status(cfg: Config, _args) -> int:
 
 
 def cmd_export(cfg: Config, args) -> int:
+    import urllib.parse
+    from ..common.chunkdb import export_lines
+    from .store import DeviceStore
     out = sys.stdout
     if args.source == "device":
         store = DeviceStore(cfg.data_dir, readonly=True)
@@ -99,6 +119,9 @@ def cmd_export(cfg: Config, args) -> int:
 
 
 def cmd_results(cfg: Config, args) -> int:
+    import urllib.parse
+    from ..common.chunkdb import result_line
+    from .store import DeviceStore
     store = DeviceStore(cfg.data_dir, readonly=True)
     sid = _session(store, args.session)
     seen = set()
@@ -125,6 +148,7 @@ def cmd_results(cfg: Config, args) -> int:
 
 
 def cmd_sessions(cfg: Config, _args) -> int:
+    from .store import DeviceStore
     store = DeviceStore(cfg.data_dir, readonly=True)
     for sid, seq, e1, e2, dev_next, cloud_done in store.sessions():
         print(json.dumps({"session": sid, "seq": seq, "end_1": e1, "end_2": e2,
@@ -133,6 +157,10 @@ def cmd_sessions(cfg: Config, _args) -> int:
 
 
 def main(argv=None) -> int:
+    argv = sys.argv[1:] if argv is None else argv
+    if argv == ["run"]:
+        return cmd_run(Config.load())  # fast path: no argparse, nothing else imported yet
+    import argparse
     p = argparse.ArgumentParser(prog="pipeline", description="Never-lose-a-heartbeat pipeline")
     sub = p.add_subparsers(dest="cmd", required=True)
     sub.add_parser("run", help="run the pipeline service")

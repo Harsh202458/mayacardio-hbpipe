@@ -1,0 +1,5 @@
+# Native helper that applies iptables rules inside another container's network namespace
+# (iptables cannot run under ARM64 emulation):
+#   docker run --rm --net container:hb-dev --cap-add NET_ADMIN hbpipe-netctl iptables -I OUTPUT -d IP -j DROP
+FROM alpine:3.20
+RUN apk add --no-cache iptables
