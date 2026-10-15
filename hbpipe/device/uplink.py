@@ -22,8 +22,10 @@ from .store import DeviceStore
 log = logging.getLogger("hbpipe.uplink")
 
 PING_INTERVAL = 1.0
-PING_TIMEOUT = 1.5
-FAILS_TO_OFFLINE = 3
+PING_TIMEOUT = 1.5      # per request on an established connection
+CONNECT_TIMEOUT = 4.0   # TCP + TLS setup of a new connection
+OFFLINE_AFTER = 5.0     # go offline once nothing has succeeded for this long (and 2+ failures)
+FAILS_TO_OFFLINE = 2
 OKS_TO_ONLINE = 2
 UPLOAD_INTERVAL = 0.5
 
@@ -57,28 +59,64 @@ class CloudClient:
         self.token = token
         self.bytes_sent = 0
         self.bytes_received = 0
+        # One kept-alive connection per channel ("ping", "ingest"): a TLS handshake per request
+        # costs CPU and, on a slow board, can exceed the ping deadline by itself.
+        self._conns: dict = {}
+        self._locks = {"ping": threading.Lock(), "ingest": threading.Lock()}
 
     def _conn(self, timeout: float):
         cls = http.client.HTTPSConnection if self.https else http.client.HTTPConnection
         return cls(self.host, self.port, timeout=timeout)
 
+    def connected(self, channel: str) -> bool:
+        return channel in self._conns
+
+    def _drop(self, channel: str) -> None:
+        conn = self._conns.pop(channel, None)
+        if conn is not None:
+            try:
+                conn.close()
+            except Exception:  # noqa: BLE001
+                pass
+
     def call(self, method: str, path: str, body: Optional[bytes] = None, timeout: float = 5.0,
-             headers: Optional[dict] = None):
+             headers: Optional[dict] = None, channel: Optional[str] = None):
         h = {"Authorization": f"Bearer {self.token}"}
         if headers:
             h.update(headers)
-        conn = self._conn(timeout)
+        if channel is None:  # one-off request on a fresh connection
+            conn = self._conn(timeout)
+            try:
+                return self._exchange(conn, method, path, body, h)
+            finally:
+                conn.close()
+        lock = self._locks[channel]
+        if not lock.acquire(timeout=timeout):
+            raise OSError(f"{channel} connection busy")
         try:
-            conn.request(method, self.prefix + path, body=body, headers=h)
-            resp = conn.getresponse()
-            data = resp.read()
-            self.bytes_sent += len(body or b"") + 200
-            self.bytes_received += len(data) + 200
-            if resp.status != 200:
-                raise OSError(f"cloud returned HTTP {resp.status}: {data[:200]!r}")
-            return data
+            conn = self._conns.get(channel)
+            if conn is None:
+                conn = self._conn(CONNECT_TIMEOUT)
+                conn.connect()
+                self._conns[channel] = conn
+            conn.sock.settimeout(timeout)
+            try:
+                return self._exchange(conn, method, path, body, h)
+            except Exception:
+                self._drop(channel)
+                raise
         finally:
-            conn.close()
+            lock.release()
+
+    def _exchange(self, conn, method, path, body, headers) -> bytes:
+        conn.request(method, self.prefix + path, body=body, headers=headers)
+        resp = conn.getresponse()
+        data = resp.read()
+        self.bytes_sent += len(body or b"") + 200
+        self.bytes_received += len(data) + 200
+        if resp.status != 200:
+            raise OSError(f"cloud returned HTTP {resp.status}: {data[:200]!r}")
+        return data
 
     def stream(self, path: str, timeout: float = 60.0):
         """Yield response lines (for exports)."""
@@ -94,15 +132,18 @@ class CloudClient:
             conn.close()
 
     def ping(self) -> bool:
-        ok, _ = bounded(lambda: self.call("GET", "/health", timeout=PING_TIMEOUT), PING_TIMEOUT)
+        budget = PING_TIMEOUT + (0.0 if self.connected("ping") else CONNECT_TIMEOUT)
+        ok, _ = bounded(lambda: self.call("GET", "/health", timeout=PING_TIMEOUT, channel="ping"),
+                        budget)
         return ok
 
     def ingest(self, payload: dict, timeout: float):
         body = gzip.compress(json.dumps(payload, separators=(",", ":")).encode("utf-8"), 6)
         ok, value = bounded(lambda: self.call("POST", "/ingest", body, timeout=timeout,
                                               headers={"Content-Type": "application/json",
-                                                       "Content-Encoding": "gzip"}),
-                            timeout + 1.0)
+                                                       "Content-Encoding": "gzip"},
+                                              channel="ingest"),
+                            timeout + CONNECT_TIMEOUT + 1.0)
         if not ok:
             return None
         return json.loads(value)
@@ -121,6 +162,7 @@ class ModeManager:
         self.mode = get_meta(self.conn, "mode", "online")
         self.fails = 0
         self.oks = 0
+        self.last_ok = time.monotonic()
         self._persist("startup")
 
     def _persist(self, reason: str) -> None:
@@ -134,13 +176,16 @@ class ModeManager:
             if ok:
                 self.oks += 1
                 self.fails = 0
+                self.last_ok = time.monotonic()
                 if self.mode == "offline" and self.oks >= OKS_TO_ONLINE:
                     self.mode = "online"
                     self._persist(f"{source}: {self.oks} successes")
             else:
                 self.fails += 1
                 self.oks = 0
-                if self.mode == "online" and self.fails >= FAILS_TO_OFFLINE:
+                # Time-based: a slow reconnect attempt cannot delay the switch past ~6 s.
+                if self.mode == "online" and self.fails >= FAILS_TO_OFFLINE \
+                        and time.monotonic() - self.last_ok >= OFFLINE_AFTER:
                     self.mode = "offline"
                     self._persist(f"{source}: {self.fails} failures")
 

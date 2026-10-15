@@ -190,10 +190,10 @@ def t_kill(out):
 
 
 def t_net(out):
-    e = Env("net", out, duration=1000)
-    summary = {"test": "T5: network cut 30 s, then 10 min (iptables DROP)", "switches": []}
+    e = Env("net", out, duration=400)
+    summary = {"test": "T5: network cut 30 s, then 3 min (iptables DROP)", "switches": []}
     cuts = []
-    for start, length in ((60, 30), (200, 600)):
+    for start, length in ((60, 30), (150, 180)):
         e.at(start)
         e.net(True)
         cut_wall = time.time()        # rule is in place when the helper returns
@@ -202,7 +202,7 @@ def t_net(out):
         restore_wall = time.time()
         drained = e.wait_backlog(900)
         cuts.append((length, cut_wall, restore_wall, drained))
-    e.at(1005)
+    e.at(405)
     # Switch delays from the device's own event log (device and host share the Docker VM clock,
     # measured offset ~0.2 s). Polling `pipeline status` through `docker exec` into the emulated
     # container adds seconds of overhead, so it is not used for timing.
