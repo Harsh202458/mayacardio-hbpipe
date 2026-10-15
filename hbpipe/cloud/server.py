@@ -67,6 +67,14 @@ class Handler(BaseHTTPRequestHandler):
         q = dict(urllib.parse.parse_qsl(u.query))
         if u.path == "/health":
             return self._send(200, {"ok": True, "time": time.time()})
+        if u.path == "/":
+            return self._send(200, {
+                "service": "hbpipe cloud: Never Lose a Heartbeat",
+                "public": {"/health": "liveness check"},
+                "token_required": ["/ingest (POST)", "/export?session=ID", "/results?session=ID",
+                                   "/status?session=ID", "/sessions"],
+                "auth": "Authorization: Bearer <HB_CLOUD_TOKEN>",
+            })
         if not self._authorised():
             return
         try:
