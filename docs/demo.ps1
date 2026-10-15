@@ -28,7 +28,16 @@ function Watch-Status {
     }
 }
 
-function Cut-Network     { docker network disconnect bridge $Dev; "NETWORK CUT at $(Get-Date -Format HH:mm:ss)" }
+# Single-window version: print the live status every second for N seconds, then return.
+function Watch-For([int]$Seconds = 10) {
+    $end = (Get-Date).AddSeconds($Seconds)
+    while ((Get-Date) -lt $end) {
+        "{0}   {1}" -f (Get-Date -Format "HH:mm:ss"), (docker exec $Dev pipeline status 2>$null)
+        Start-Sleep -Milliseconds 700
+    }
+}
+
+function Cut-Network    { docker network disconnect bridge $Dev; "NETWORK CUT at $(Get-Date -Format HH:mm:ss)" }
 function Restore-Network { docker network connect bridge $Dev;    "NETWORK RESTORED at $(Get-Date -Format HH:mm:ss)" }
 
 function Show-Offline-Results {
@@ -56,4 +65,4 @@ function Verify-Session([string]$Session) {
     docker exec $Dev sh -c $cmd.Replace('SID', $Session)
 }
 
-"Loaded: Start-Device, Show-Device, Watch-Status, Cut-Network, Restore-Network, Show-Offline-Results, Kill-Pipeline, Power-Cut, Show-Sessions, Verify-Session <id>"
+"Loaded: Start-Device, Show-Device, Watch-Status, Watch-For <sec>, Cut-Network, Restore-Network, Show-Offline-Results, Kill-Pipeline, Power-Cut, Show-Sessions, Verify-Session <id>"

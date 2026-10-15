@@ -58,3 +58,9 @@ The `biosignal-mock` download link was blank in the assessment we received. We i
 2. Per-channel statistics are output as `mean_1/min_1/max_1/mean_2/min_2/max_2` lists; `null` when there are no samples.
 3. Rounding is half away from zero, to 1 decimal place.
 4. Windows processed offline keep `mode: offline` and are not recomputed online.
+
+## AI disclosure
+
+Developed with the help of **Claude (Anthropic) via Claude Code** for planning, code drafting,
+tests and documentation. Design decisions, test runs and all reported results were reviewed and
+verified by me.

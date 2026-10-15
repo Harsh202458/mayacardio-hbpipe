@@ -113,3 +113,9 @@ render.yaml      Render Blueprint for the cloud (Neon Postgres via HB_CLOUD_DB)
 | Neon Postgres | free plan, no payment method |
 
 
+
+## AI disclosure
+
+Developed with the help of **Claude (Anthropic) via Claude Code** for planning, code drafting,
+tests and documentation. Design decisions, test runs and all reported results were reviewed and
+verified by me.
