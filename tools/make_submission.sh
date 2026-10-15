@@ -27,6 +27,7 @@ done
 cp -r "$ROOT/evidence/resources/." "$PKG/4_resources/"
 [ -n "$VIDEO" ] && cp "$VIDEO" "$PKG/5_demo_video.mp4"
 
-(cd "$OUT" && powershell.exe -NoProfile -Command \
-  "Compress-Archive -Path 'MayaCardio_Submission\\*' -DestinationPath 'MayaCardio_Submission.zip' -Force")
+# Windows' bsdtar writes a standard zip with forward-slash paths (PowerShell 5.1's
+# Compress-Archive writes backslashes, which break on macOS/Linux unzip).
+(cd "$PKG" && /c/Windows/System32/tar.exe -a -c -f ../MayaCardio_Submission.zip ./*)
 ls -la "$OUT/MayaCardio_Submission.zip"
