@@ -1,0 +1,12 @@
+=== kill
+  kill: [    0.0s] started: mode=ramp duration=330s mock_args='--corrupt 0.02 --dup 0.02 --stall 0.003 --stall-secs 3 --dropout 2:40000:40399'
+  kill: [   42.1s] kill -9 pipeline (supervisor restarts it after 1 s)
+  kill: [   86.4s] kill -9 pipeline (supervisor restarts it after 1 s)
+  kill: [  131.0s] kill -9 pipeline (supervisor restarts it after 1 s)
+  kill: [  176.8s] kill -9 pipeline (supervisor restarts it after 1 s)
+  kill: [  220.8s] kill -9 pipeline (supervisor restarts it after 1 s)
+  kill: [  268.8s] kill -9 pipeline (supervisor restarts it after 1 s)
+  kill: [  349.5s] backlog drained after 14.5 s
+  kill: [  699.1s] RESULT PASS
+OVERALL: {"kill": true}
+=== copied kill (exit 0)

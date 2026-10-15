@@ -1,0 +1,83 @@
+{
+  "test": "T2+T9: 6x kill -9 every 45 s, with mock faults (corrupt 2%, dup 2%, 3 s stalls, sensor-2 dropout)",
+  "backlog_drain_s": 14.5,
+  "final_status": {
+    "mode": "online",
+    "session": "0768083d",
+    "samples_saved": 262623,
+    "samples_in_cloud": 262623,
+    "backlog": 0,
+    "losses": 5,
+    "disk_full": false
+  },
+  "sessions": {
+    "0768083d": {
+      "PASS": true,
+      "device_equals_cloud": {
+        "file": "C:/Users/hr202/AppData/Local/Temp/hbev4\\kill\\cloud-0768083d.jsonl",
+        "identical_samples": true,
+        "identical_losses": true
+      },
+      "windows": 330,
+      "windows_without_result": [],
+      "results_by_mode": {
+        "online": 330,
+        "offline": 0
+      },
+      "sensor_1": {
+        "samples": 131563,
+        "wrong_values": 0,
+        "lost_samples": 437,
+        "loss_records": [
+          [
+            65581,
+            65778,
+            "buffer_overflow"
+          ],
+          [
+            103186,
+            103424,
+            "buffer_overflow"
+          ]
+        ],
+        "silent_holes": [],
+        "loss_sample_overlaps": 0
+      },
+      "sensor_2": {
+        "samples": 131060,
+        "wrong_values": 0,
+        "lost_samples": 940,
+        "loss_records": [
+          [
+            40000,
+            40399,
+            "sensor_dropout"
+          ],
+          [
+            65604,
+            65883,
+            "buffer_overflow"
+          ],
+          [
+            103232,
+            103491,
+            "buffer_overflow"
+          ]
+        ],
+        "silent_holes": [],
+        "loss_sample_overlaps": 0
+      }
+    }
+  },
+  "PASS": true,
+  "log": [
+    "[    0.0s] started: mode=ramp duration=330s mock_args='--corrupt 0.02 --dup 0.02 --stall 0.003 --stall-secs 3 --dropout 2:40000:40399'",
+    "[   42.1s] kill -9 pipeline (supervisor restarts it after 1 s)",
+    "[   86.4s] kill -9 pipeline (supervisor restarts it after 1 s)",
+    "[  131.0s] kill -9 pipeline (supervisor restarts it after 1 s)",
+    "[  176.8s] kill -9 pipeline (supervisor restarts it after 1 s)",
+    "[  220.8s] kill -9 pipeline (supervisor restarts it after 1 s)",
+    "[  268.8s] kill -9 pipeline (supervisor restarts it after 1 s)",
+    "[  349.5s] backlog drained after 14.5 s"
+  ]
+}

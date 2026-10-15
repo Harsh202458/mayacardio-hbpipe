@@ -1,0 +1,10 @@
+{
+  "test": "T5b: 2 h outage backlog (5.76 M samples + 7200 offline results) uploaded from the ARM64 device",
+  "output": [
+    "backlog: 5,760,000 samples, 7,200 offline results (built in 249s)",
+    "",
+    "catch-up done in 173s (2.9 min, limit 15 min); sent 30.0 MB; cloud has 5,760,000 samples, results {'offline': 7200}",
+    "PASS"
+  ],
+  "PASS": true
+}

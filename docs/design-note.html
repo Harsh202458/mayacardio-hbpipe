@@ -66,7 +66,7 @@ device evidence: ARM64 (linux/arm64 Debian 12 container, --cpus 4 --memory 2g)</
 <li>plus one commit interval (0.2 s);</li>
 <li>plus the fsync time.</li>
 </ul>
-<p>That is ≈ 0.35 s; we state <b>0.5 s</b>. Measured on the ARM64 device (whole container killed, mock included): <b>{{POWER_LOSS}}</b>. These samples appear after reboot as the old session's tail loss (<code>to_index: null</code>). Committing more often lowers the bound at the cost of SD-card writes.</p>
+<p>That is ≈ 0.35 s; we state <b>0.5 s</b>. Measured on the ARM64 device (whole container killed, mock included): <b>0.02–0.055 s per sensor over 2 cuts</b>. These samples appear after reboot as the old session's tail loss (<code>to_index: null</code>). Committing more often lowers the bound at the cost of SD-card writes.</p>
 
 <h2>5. Results logic (section 3)</h2>
 <ul>
@@ -80,7 +80,13 @@ device evidence: ARM64 (linux/arm64 Debian 12 container, --cpus 4 --memory 2g)</
 <h2>6. Measured (ARM64 device, final code)</h2>
 <table>
 <tr><th>Check</th><th>Result</th></tr>
-{{RESULTS_ROWS}}
+<tr><td>6× <code>kill -9</code> + mock faults (corrupt, duplicate, stalls, dropout)</td><td>PASS: device = cloud, no silent loss, 330/330 windows</td></tr>
+<tr><td>Network cut 30 s / 3 min</td><td>PASS: offline after 4.8 / 3.8 s, online after 0.3 / 0.9 s</td></tr>
+<tr><td>2 power cuts (device + mock killed)</td><td>PASS: lost 0.02–0.055 s per sensor, listed as <code>to_index: null</code></td></tr>
+<tr><td>Disk full (64 MB fs filled in 2 stages, then freed)</td><td>PASS: kept saving into the reserve; <code>disk_full</code> losses only when full; recovered</td></tr>
+<tr><td>Clock +1 h, −2 h, +1 day</td><td>PASS: 0 samples lost</td></tr>
+<tr><td>2 h outage catch-up (5.76 M samples)</td><td>PASS: cloud complete in 2.9 min (limit 15)</td></tr>
+<tr><td>Results (ECG)</td><td>HR 60 / 90 / 72 bpm as scheduled; online = offline</td></tr>
 </table>
 
 <h2>7. Resources, 1 h online against the deployed cloud</h2>

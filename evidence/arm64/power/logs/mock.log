@@ -1,0 +1,6 @@
+[fake-mock] session_start id=63ca0621 t0_wall=1792084005.594
+[fake-mock] session 63ca0621 mode=ramp port=7100
+[fake-mock] session_start id=e26f418a t0_wall=1792084070.756
+[fake-mock] session e26f418a mode=ramp port=7100
+[fake-mock] session_start id=dc7fbc1d t0_wall=1792084151.721
+[fake-mock] session dc7fbc1d mode=ramp port=7100

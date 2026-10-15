@@ -1,0 +1,3 @@
+2026-10-15 17:24:42,481 INFO hbpipe.collector: connected to mock 127.0.0.1:7100
+2026-10-15 17:24:42,635 INFO hbpipe.collector: new mock session 0d4a151f
+2026-10-15 17:24:46,011 INFO hbpipe.uplink: mode -> online (startup)

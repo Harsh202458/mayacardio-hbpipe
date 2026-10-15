@@ -1,0 +1,179 @@
+{
+  "test": "T4: 2 power cuts (docker kill of the whole device incl. mock)",
+  "backlog_drain_s": 7.3,
+  "final_status": {
+    "mode": "online",
+    "session": "dc7fbc1d",
+    "samples_saved": 261602,
+    "samples_in_cloud": 261602,
+    "backlog": 0,
+    "losses": 4,
+    "disk_full": false
+  },
+  "sessions": {
+    "63ca0621": {
+      "PASS": true,
+      "device_equals_cloud": {
+        "file": "C:/Users/hr202/AppData/Local/Temp/hbev8\\power\\cloud-63ca0621.jsonl",
+        "identical_samples": true,
+        "identical_losses": true
+      },
+      "windows": 57,
+      "windows_without_result": [],
+      "results_by_mode": {
+        "online": 57,
+        "offline": 0
+      },
+      "sensor_1": {
+        "samples": 22432,
+        "wrong_values": 0,
+        "lost_samples": 8,
+        "loss_records": [
+          [
+            22432,
+            null,
+            "device_power_loss_or_reboot"
+          ]
+        ],
+        "silent_holes": [],
+        "loss_sample_overlaps": 0
+      },
+      "sensor_2": {
+        "samples": 22440,
+        "wrong_values": 0,
+        "lost_samples": 0,
+        "loss_records": [
+          [
+            22440,
+            null,
+            "device_power_loss_or_reboot"
+          ]
+        ],
+        "silent_holes": [],
+        "loss_sample_overlaps": 0
+      }
+    },
+    "e26f418a": {
+      "PASS": true,
+      "device_equals_cloud": {
+        "file": "C:/Users/hr202/AppData/Local/Temp/hbev8\\power\\cloud-e26f418a.jsonl",
+        "identical_samples": true,
+        "identical_losses": true
+      },
+      "windows": 71,
+      "windows_without_result": [],
+      "results_by_mode": {
+        "online": 71,
+        "offline": 0
+      },
+      "sensor_1": {
+        "samples": 28362,
+        "wrong_values": 0,
+        "lost_samples": 6,
+        "loss_records": [
+          [
+            28362,
+            null,
+            "device_power_loss_or_reboot"
+          ]
+        ],
+        "silent_holes": [],
+        "loss_sample_overlaps": 0
+      },
+      "sensor_2": {
+        "samples": 28368,
+        "wrong_values": 0,
+        "lost_samples": 0,
+        "loss_records": [
+          [
+            28368,
+            null,
+            "device_power_loss_or_reboot"
+          ]
+        ],
+        "silent_holes": [],
+        "loss_sample_overlaps": 0
+      }
+    },
+    "dc7fbc1d": {
+      "PASS": true,
+      "device_equals_cloud": {
+        "file": "C:/Users/hr202/AppData/Local/Temp/hbev8\\power\\cloud-dc7fbc1d.jsonl",
+        "identical_samples": true,
+        "identical_losses": true
+      },
+      "windows": 200,
+      "windows_without_result": [],
+      "results_by_mode": {
+        "online": 200,
+        "offline": 0
+      },
+      "sensor_1": {
+        "samples": 80000,
+        "wrong_values": 0,
+        "lost_samples": 0,
+        "loss_records": [],
+        "silent_holes": [],
+        "loss_sample_overlaps": 0
+      },
+      "sensor_2": {
+        "samples": 80000,
+        "wrong_values": 0,
+        "lost_samples": 0,
+        "loss_records": [],
+        "silent_holes": [],
+        "loss_sample_overlaps": 0
+      }
+    }
+  },
+  "PASS": true,
+  "log": [
+    "[    0.0s] started: mode=ramp duration=200s mock_args=''",
+    "[   60.6s] POWER CUT (docker kill: device and mock die)",
+    "[   66.3s] power restored (container started; mock starts a new session)",
+    "[  140.6s] POWER CUT (docker kill: device and mock die)",
+    "[  146.9s] power restored (container started; mock starts a new session)",
+    "[  377.3s] backlog drained after 7.3 s",
+    "[  583.0s] RESULT PASS",
+    "[  583.0s] power-cut tail losses: [{'session': '63ca0621', 'sensor': 'sensor_1', 'tail_from': 22432, 'reason': 'device_power_loss_or_reboot', 'mock_produced_at_cut': 22448, 'lost_samples': 16, 'lost_seconds': 0.04}, {'session': '63ca0621', 'sensor': 'sensor_2', 'tail_from': 22440, 'reason': 'device_power_loss_or_reboot', 'mock_produced_at_cut': 22448, 'lost_samples': 8, 'lost_seconds': 0.02}, {'session': 'e26f418a', 'sensor': 'sensor_1', 'tail_from': 28362, 'reason': 'device_power_loss_or_reboot', 'mock_produced_at_cut': 28384, 'lost_samples': 22, 'lost_seconds': 0.055}, {'session': 'e26f418a', 'sensor': 'sensor_2', 'tail_from': 28368, 'reason': 'device_power_loss_or_reboot', 'mock_produced_at_cut': 28384, 'lost_samples': 16, 'lost_seconds': 0.04}]"
+  ],
+  "tail_losses": [
+    {
+      "session": "63ca0621",
+      "sensor": "sensor_1",
+      "tail_from": 22432,
+      "reason": "device_power_loss_or_reboot",
+      "mock_produced_at_cut": 22448,
+      "lost_samples": 16,
+      "lost_seconds": 0.04
+    },
+    {
+      "session": "63ca0621",
+      "sensor": "sensor_2",
+      "tail_from": 22440,
+      "reason": "device_power_loss_or_reboot",
+      "mock_produced_at_cut": 22448,
+      "lost_samples": 8,
+      "lost_seconds": 0.02
+    },
+    {
+      "session": "e26f418a",
+      "sensor": "sensor_1",
+      "tail_from": 28362,
+      "reason": "device_power_loss_or_reboot",
+      "mock_produced_at_cut": 28384,
+      "lost_samples": 22,
+      "lost_seconds": 0.055
+    },
+    {
+      "session": "e26f418a",
+      "sensor": "sensor_2",
+      "tail_from": 28368,
+      "reason": "device_power_loss_or_reboot",
+      "mock_produced_at_cut": 28384,
+      "lost_samples": 16,
+      "lost_seconds": 0.04
+    }
+  ],
+  "worst_power_cut_loss_s": 0.055
+}

@@ -1,0 +1,5 @@
+{"event": "start", "wall": 1792085082.27, "mono": 5707.048, "pid": 15}
+{"event": "session_started", "wall": 1792085082.629, "mono": 5707.401, "session": "0d4a151f"}
+{"event": "mode", "wall": 1792085086.01, "mono": 5710.782, "mode": "online", "reason": "startup"}
+{"event": "sensor_end", "wall": 1792085320.785, "mono": 5945.347, "session": "0d4a151f", "sensor": 1, "end_index": 96000}
+{"event": "sensor_end", "wall": 1792085320.843, "mono": 5945.405, "session": "0d4a151f", "sensor": 2, "end_index": 96000}

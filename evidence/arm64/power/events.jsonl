@@ -1,0 +1,17 @@
+{"event": "start", "wall": 1792084009.449, "mono": 4633.775, "pid": 16}
+{"event": "session_started", "wall": 1792084010.063, "mono": 4634.382, "session": "63ca0621"}
+{"event": "mode", "wall": 1792084011.848, "mono": 4636.167, "mode": "online", "reason": "startup"}
+{"event": "start", "wall": 1792084071.53, "mono": 4695.874, "pid": 17}
+{"event": "loss", "wall": 1792084071.901, "mono": 4696.242, "session": "63ca0621", "sensor": 1, "from_index": 22432, "to_index": null, "reason": "device_power_loss_or_reboot"}
+{"event": "loss", "wall": 1792084071.905, "mono": 4696.245, "session": "63ca0621", "sensor": 2, "from_index": 22440, "to_index": null, "reason": "device_power_loss_or_reboot"}
+{"event": "session_closed", "wall": 1792084071.909, "mono": 4696.25, "session": "63ca0621", "reason": "device_power_loss_or_reboot", "cursors": {"1": 22432, "2": 22440}}
+{"event": "session_started", "wall": 1792084071.912, "mono": 4696.253, "session": "e26f418a"}
+{"event": "mode", "wall": 1792084073.104, "mono": 4697.445, "mode": "online", "reason": "startup"}
+{"event": "start", "wall": 1792084152.551, "mono": 4776.93, "pid": 15}
+{"event": "loss", "wall": 1792084152.774, "mono": 4777.151, "session": "e26f418a", "sensor": 1, "from_index": 28362, "to_index": null, "reason": "device_power_loss_or_reboot"}
+{"event": "loss", "wall": 1792084152.777, "mono": 4777.154, "session": "e26f418a", "sensor": 2, "from_index": 28368, "to_index": null, "reason": "device_power_loss_or_reboot"}
+{"event": "session_closed", "wall": 1792084152.778, "mono": 4777.155, "session": "e26f418a", "reason": "device_power_loss_or_reboot", "cursors": {"1": 28362, "2": 28368}}
+{"event": "session_started", "wall": 1792084152.78, "mono": 4777.157, "session": "dc7fbc1d"}
+{"event": "mode", "wall": 1792084153.561, "mono": 4777.937, "mode": "online", "reason": "startup"}
+{"event": "sensor_end", "wall": 1792084351.62, "mono": 4976.117, "session": "dc7fbc1d", "sensor": 1, "end_index": 80000}
+{"event": "sensor_end", "wall": 1792084351.645, "mono": 4976.14, "session": "dc7fbc1d", "sensor": 2, "end_index": 80000}

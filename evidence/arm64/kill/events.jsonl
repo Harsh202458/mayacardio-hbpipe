@@ -1,0 +1,22 @@
+{"event": "start", "wall": 1792059417.409, "mono": 339.318, "pid": 16}
+{"event": "session_started", "wall": 1792059418.277, "mono": 340.181, "session": "0768083d"}
+{"event": "mode", "wall": 1792059427.407, "mono": 349.312, "mode": "online", "reason": "startup"}
+{"event": "start", "wall": 1792059450.838, "mono": 372.765, "pid": 87}
+{"event": "mode", "wall": 1792059453.579, "mono": 375.505, "mode": "online", "reason": "startup"}
+{"event": "start", "wall": 1792059495.824, "mono": 417.778, "pid": 209}
+{"event": "mode", "wall": 1792059498.182, "mono": 420.127, "mode": "online", "reason": "startup"}
+{"event": "loss", "wall": 1792059514.913, "mono": 436.858, "session": "0768083d", "sensor": 2, "from_index": 40000, "to_index": 40399, "reason": "sensor_dropout"}
+{"event": "start", "wall": 1792059539.253, "mono": 461.216, "pid": 333}
+{"event": "mode", "wall": 1792059544.738, "mono": 466.695, "mode": "online", "reason": "startup"}
+{"event": "start", "wall": 1792059587.805, "mono": 509.794, "pid": 440}
+{"event": "loss", "wall": 1792059588.507, "mono": 510.481, "session": "0768083d", "sensor": 1, "from_index": 65581, "to_index": 65778, "reason": "buffer_overflow"}
+{"event": "loss", "wall": 1792059588.684, "mono": 510.658, "session": "0768083d", "sensor": 2, "from_index": 65604, "to_index": 65883, "reason": "buffer_overflow"}
+{"event": "mode", "wall": 1792059592.245, "mono": 514.219, "mode": "online", "reason": "startup"}
+{"event": "start", "wall": 1792059630.877, "mono": 552.863, "pid": 537}
+{"event": "mode", "wall": 1792059632.846, "mono": 554.83, "mode": "online", "reason": "startup"}
+{"event": "start", "wall": 1792059681.992, "mono": 603.998, "pid": 630}
+{"event": "loss", "wall": 1792059682.52, "mono": 604.523, "session": "0768083d", "sensor": 1, "from_index": 103186, "to_index": 103424, "reason": "buffer_overflow"}
+{"event": "loss", "wall": 1792059682.624, "mono": 604.627, "session": "0768083d", "sensor": 2, "from_index": 103232, "to_index": 103491, "reason": "buffer_overflow"}
+{"event": "mode", "wall": 1792059687.36, "mono": 609.364, "mode": "online", "reason": "startup"}
+{"event": "sensor_end", "wall": 1792059744.09, "mono": 666.109, "session": "0768083d", "sensor": 1, "end_index": 132000}
+{"event": "sensor_end", "wall": 1792059744.136, "mono": 666.155, "session": "0768083d", "sensor": 2, "end_index": 132000}

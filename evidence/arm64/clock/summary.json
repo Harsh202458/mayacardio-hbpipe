@@ -1,0 +1,54 @@
+{
+  "test": "T8: system clock +1 h, -2 h, +1 day during the run",
+  "backlog_drain_s": 8.2,
+  "final_status": {
+    "mode": "online",
+    "session": "0d4a151f",
+    "samples_saved": 192000,
+    "samples_in_cloud": 192000,
+    "backlog": 0,
+    "losses": 0,
+    "disk_full": false
+  },
+  "sessions": {
+    "0d4a151f": {
+      "PASS": true,
+      "device_equals_cloud": {
+        "file": "C:/Users/hr202/AppData/Local/Temp/hbev8\\clock\\cloud-0d4a151f.jsonl",
+        "identical_samples": true,
+        "identical_losses": true
+      },
+      "windows": 240,
+      "windows_without_result": [],
+      "results_by_mode": {
+        "online": 240,
+        "offline": 0
+      },
+      "sensor_1": {
+        "samples": 96000,
+        "wrong_values": 0,
+        "lost_samples": 0,
+        "loss_records": [],
+        "silent_holes": [],
+        "loss_sample_overlaps": 0
+      },
+      "sensor_2": {
+        "samples": 96000,
+        "wrong_values": 0,
+        "lost_samples": 0,
+        "loss_records": [],
+        "silent_holes": [],
+        "loss_sample_overlaps": 0
+      }
+    }
+  },
+  "PASS": true,
+  "log": [
+    "[    0.0s] started: mode=ramp duration=240s mock_args=''",
+    "[   61.2s] clock jumped +1 hour: device now Thu Oct 15 18:25:33 UTC 2026",
+    "[  111.1s] clock jumped -2 hours: device now Thu Oct 15 15:26:23 UTC 2026",
+    "[  161.0s] clock jumped +1 day: device now Fri Oct 16 17:27:13 UTC 2026",
+    "[  211.1s] clock restored: Thu Oct 15 17:28:02 UTC 2026",
+    "[  253.2s] backlog drained after 8.2 s"
+  ]
+}

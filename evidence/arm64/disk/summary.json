@@ -1,0 +1,70 @@
+{
+  "test": "T7: data dir on 64 MB tmpfs; filled to 2 MB free at 60 s (reserve used, saving continues), to 0.5 MB at 100 s (disk_full losses), freed at 160 s",
+  "disk_events": [
+    "{\"event\": \"disk_low\", \"wall\": 1792084685.286, \"mono\": 5309.952, \"free_mb\": 27.4}",
+    "{\"event\": \"disk_full\", \"wall\": 1792084725.202, \"mono\": 5349.877, \"free_mb\": 0.5}",
+    "{\"event\": \"disk_recovered\", \"wall\": 1792084784.426, \"mono\": 5409.118, \"free_mb\": 61.9}"
+  ],
+  "backlog_drain_s": 14.0,
+  "final_status": {
+    "mode": "online",
+    "session": "7b110e94",
+    "samples_saved": 144658,
+    "samples_in_cloud": 144658,
+    "backlog": 0,
+    "losses": 2,
+    "disk_full": false
+  },
+  "sessions": {
+    "7b110e94": {
+      "PASS": true,
+      "device_equals_cloud": {
+        "file": "C:/Users/hr202/AppData/Local/Temp/hbev8\\disk\\cloud-7b110e94.jsonl",
+        "identical_samples": true,
+        "identical_losses": true
+      },
+      "windows": 240,
+      "windows_without_result": [],
+      "results_by_mode": {
+        "online": 240,
+        "offline": 0
+      },
+      "sensor_1": {
+        "samples": 72351,
+        "wrong_values": 0,
+        "lost_samples": 23649,
+        "loss_records": [
+          [
+            39268,
+            62916,
+            "disk_full"
+          ]
+        ],
+        "silent_holes": [],
+        "loss_sample_overlaps": 0
+      },
+      "sensor_2": {
+        "samples": 72307,
+        "wrong_values": 0,
+        "lost_samples": 23693,
+        "loss_records": [
+          [
+            39227,
+            62919,
+            "disk_full"
+          ]
+        ],
+        "silent_holes": [],
+        "loss_sample_overlaps": 0
+      }
+    }
+  },
+  "PASS": true,
+  "log": [
+    "[    0.0s] started: mode=ramp duration=240s mock_args=''",
+    "[   62.1s] disk filled with filler1: 2048 KB left",
+    "[  101.4s] disk filled with filler2: 512 KB left",
+    "[  160.5s] space freed",
+    "[  262.1s] backlog drained after 14.0 s"
+  ]
+}

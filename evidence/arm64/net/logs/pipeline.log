@@ -1,0 +1,7 @@
+2026-10-15 16:54:57,429 INFO hbpipe.collector: connected to mock 127.0.0.1:7100
+2026-10-15 16:54:57,876 INFO hbpipe.collector: new mock session 02283269
+2026-10-15 16:55:04,870 INFO hbpipe.uplink: mode -> online (startup)
+2026-10-15 16:55:55,404 INFO hbpipe.uplink: mode -> offline (ingest: 2 failures)
+2026-10-15 16:56:22,214 INFO hbpipe.uplink: mode -> online (health: 2 successes)
+2026-10-15 16:58:32,853 INFO hbpipe.uplink: mode -> offline (ingest: 2 failures)
+2026-10-15 17:00:21,793 INFO hbpipe.uplink: mode -> online (health: 2 successes)

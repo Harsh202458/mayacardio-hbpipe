@@ -1,0 +1,48 @@
+=== net
+  net: [    0.0s] started: mode=ramp duration=400s mock_args=''
+  net: [   62.2s] network CUT (172.19.0.3)
+  net: [   93.4s] network RESTORED (172.19.0.3)
+  net: [  220.7s] network CUT (172.19.0.3)
+  net: [  332.5s] network RESTORED (172.19.0.3)
+  net: [  414.0s] backlog drained after 8.1 s
+  net: [  674.2s] RESULT PASS
+  net: [  674.2s] cut 30s: {'cut_s': 30, 'offline_after_s': 4.82, 'online_after_s': 0.3, 'backlog_drained_after_s': 122.6}
+  net: [  674.2s] cut 180s: {'cut_s': 180, 'offline_after_s': 3.79, 'online_after_s': 0.86, 'backlog_drained_after_s': 59.6}
+OVERALL: {"net": true}
+=== copied net (exit 0)
+=== power
+  power: [    0.0s] started: mode=ramp duration=200s mock_args=''
+  power: [   60.6s] POWER CUT (docker kill: device and mock die)
+  power: [   66.3s] power restored (container started; mock starts a new session)
+  power: [  140.6s] POWER CUT (docker kill: device and mock die)
+  power: [  146.9s] power restored (container started; mock starts a new session)
+  power: [  377.3s] backlog drained after 7.3 s
+  power: [  583.0s] RESULT PASS
+  power: [  583.0s] power-cut tail losses: [{'session': '63ca0621', 'sensor': 'sensor_1', 'tail_from': 22432, 'reason': 'device_power_loss_or_reboot', 'mock_produced_at_cut': 22448, 'lost_samples': 16, 'lost_seconds': 0.04}, {'session': '63ca0621', 'sensor': 'sensor_2', 'tail_from': 22440, 'reason': 'device_power_loss_or_reboot', 'mock_produced_at_cut': 22448, 'lost_samples': 8, 'lost_seconds': 0.02}, {'session': 'e26f418a', 'sensor': 'sensor_1', 'tail_from': 28362, 'reason': 'device_power_loss_or_reboot', 'mock_produced_at_cut': 28384, 'lost_samples': 22, 'lost_seconds': 0.055}, {'session': 'e26f418a', 'sensor': 'sensor_2', 'tail_from': 28368, 'reason': 'device_power_loss_or_reboot', 'mock_produced_at_cut': 28384, 'lost_samples': 16, 'lost_seconds': 0.04}]
+OVERALL: {"power": true}
+=== copied power (exit 0)
+=== disk
+  disk: [    0.0s] started: mode=ramp duration=240s mock_args=''
+  disk: [   62.1s] disk filled with filler1: 2048 KB left
+  disk: [  101.4s] disk filled with filler2: 512 KB left
+  disk: [  160.5s] space freed
+  disk: [  262.1s] backlog drained after 14.0 s
+  disk: [  404.8s] RESULT PASS
+OVERALL: {"disk": true}
+=== copied disk (exit 0)
+=== clock
+  clock: [    0.0s] started: mode=ramp duration=240s mock_args=''
+  clock: [   61.2s] clock jumped +1 hour: device now Thu Oct 15 18:25:33 UTC 2026
+  clock: [  111.1s] clock jumped -2 hours: device now Thu Oct 15 15:26:23 UTC 2026
+  clock: [  161.0s] clock jumped +1 day: device now Fri Oct 16 17:27:13 UTC 2026
+  clock: [  211.1s] clock restored: Thu Oct 15 17:28:02 UTC 2026
+  clock: [  253.2s] backlog drained after 8.2 s
+  clock: [  365.3s] RESULT PASS
+OVERALL: {"clock": true}
+=== copied clock (exit 0)
+=== catchup
+  catchup: [    0.0s] started: mode=ramp duration=60s mock_args=''
+  catchup: [  427.7s] backlog: 5,760,000 samples, 7,200 offline results (built in 249s) |  | catch-up done in 173s (2.9 min, limit 15 min); sent 30.0 MB; cloud has 5,760,000 samples, results {'offline': 7200} | PASS
+OVERALL: {"catchup": true}
+=== copied catchup (exit 0)
+ALL DONE

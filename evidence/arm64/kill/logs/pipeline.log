@@ -1,0 +1,110 @@
+2026-10-15 10:16:57,925 INFO hbpipe.collector: connected to mock 127.0.0.1:7100
+2026-10-15 10:16:58,290 INFO hbpipe.collector: new mock session 0768083d
+2026-10-15 10:17:07,416 INFO hbpipe.uplink: mode -> online (startup)
+2026-10-15 10:17:12,945 INFO hbpipe.collector: corrupt reply for sensor 2 discarded (crc32 mismatch); will re-read
+2026-10-15 10:17:15,852 INFO hbpipe.collector: corrupt reply for sensor 2 discarded (crc32 mismatch); will re-read
+Killed
+2026-10-15 10:17:31,017 INFO hbpipe.collector: connected to mock 127.0.0.1:7100
+2026-10-15 10:17:31,209 INFO hbpipe.collector: corrupt reply for sensor 2 discarded (crc32 mismatch); will re-read
+2026-10-15 10:17:32,474 INFO hbpipe.collector: corrupt reply for sensor 1 discarded (crc32 mismatch); will re-read
+2026-10-15 10:17:33,581 INFO hbpipe.uplink: mode -> online (startup)
+2026-10-15 10:17:37,710 INFO hbpipe.collector: corrupt reply for sensor 1 discarded (crc32 mismatch); will re-read
+2026-10-15 10:17:41,183 INFO hbpipe.collector: corrupt reply for sensor 1 discarded (crc32 mismatch); will re-read
+2026-10-15 10:17:45,143 INFO hbpipe.collector: corrupt reply for sensor 1 discarded (crc32 mismatch); will re-read
+2026-10-15 10:17:48,746 INFO hbpipe.collector: corrupt reply for sensor 2 discarded (crc32 mismatch); will re-read
+2026-10-15 10:17:50,943 INFO hbpipe.collector: corrupt reply for sensor 2 discarded (crc32 mismatch); will re-read
+2026-10-15 10:17:51,414 INFO hbpipe.collector: corrupt reply for sensor 2 discarded (crc32 mismatch); will re-read
+2026-10-15 10:17:51,961 INFO hbpipe.collector: corrupt reply for sensor 1 discarded (crc32 mismatch); will re-read
+2026-10-15 10:17:53,313 INFO hbpipe.collector: corrupt reply for sensor 1 discarded (crc32 mismatch); will re-read
+2026-10-15 10:18:01,658 INFO hbpipe.collector: corrupt reply for sensor 2 discarded (crc32 mismatch); will re-read
+2026-10-15 10:18:02,338 INFO hbpipe.collector: corrupt reply for sensor 1 discarded (crc32 mismatch); will re-read
+Killed
+2026-10-15 10:18:16,109 INFO hbpipe.collector: connected to mock 127.0.0.1:7100
+2026-10-15 10:18:17,173 INFO hbpipe.collector: corrupt reply for sensor 1 discarded (crc32 mismatch); will re-read
+2026-10-15 10:18:18,196 INFO hbpipe.uplink: mode -> online (startup)
+2026-10-15 10:18:19,170 INFO hbpipe.collector: corrupt reply for sensor 2 discarded (crc32 mismatch); will re-read
+2026-10-15 10:18:22,285 INFO hbpipe.collector: corrupt reply for sensor 2 discarded (crc32 mismatch); will re-read
+2026-10-15 10:18:23,816 INFO hbpipe.collector: corrupt reply for sensor 2 discarded (crc32 mismatch); will re-read
+2026-10-15 10:18:24,642 INFO hbpipe.collector: corrupt reply for sensor 1 discarded (crc32 mismatch); will re-read
+2026-10-15 10:18:26,580 INFO hbpipe.collector: corrupt reply for sensor 2 discarded (crc32 mismatch); will re-read
+2026-10-15 10:18:28,096 INFO hbpipe.collector: corrupt reply for sensor 2 discarded (crc32 mismatch); will re-read
+2026-10-15 10:18:28,320 INFO hbpipe.collector: corrupt reply for sensor 2 discarded (crc32 mismatch); will re-read
+2026-10-15 10:18:36,917 INFO hbpipe.collector: corrupt reply for sensor 1 discarded (crc32 mismatch); will re-read
+2026-10-15 10:18:40,269 INFO hbpipe.collector: corrupt reply for sensor 2 discarded (crc32 mismatch); will re-read
+2026-10-15 10:18:40,829 INFO hbpipe.collector: corrupt reply for sensor 2 discarded (crc32 mismatch); will re-read
+2026-10-15 10:18:43,893 INFO hbpipe.collector: corrupt reply for sensor 1 discarded (crc32 mismatch); will re-read
+2026-10-15 10:18:45,471 INFO hbpipe.collector: corrupt reply for sensor 2 discarded (crc32 mismatch); will re-read
+2026-10-15 10:18:46,849 INFO hbpipe.collector: corrupt reply for sensor 1 discarded (crc32 mismatch); will re-read
+2026-10-15 10:18:47,804 INFO hbpipe.collector: corrupt reply for sensor 1 discarded (crc32 mismatch); will re-read
+2026-10-15 10:18:48,557 INFO hbpipe.collector: corrupt reply for sensor 2 discarded (crc32 mismatch); will re-read
+2026-10-15 10:18:52,030 INFO hbpipe.collector: corrupt reply for sensor 2 discarded (crc32 mismatch); will re-read
+Killed
+2026-10-15 10:18:59,454 INFO hbpipe.collector: connected to mock 127.0.0.1:7100
+2026-10-15 10:19:02,812 INFO hbpipe.collector: corrupt reply for sensor 1 discarded (crc32 mismatch); will re-read
+2026-10-15 10:19:04,742 INFO hbpipe.uplink: mode -> online (startup)
+2026-10-15 10:19:06,590 INFO hbpipe.collector: corrupt reply for sensor 2 discarded (crc32 mismatch); will re-read
+2026-10-15 10:19:12,770 INFO hbpipe.collector: corrupt reply for sensor 1 discarded (crc32 mismatch); will re-read
+2026-10-15 10:19:15,405 INFO hbpipe.collector: corrupt reply for sensor 1 discarded (crc32 mismatch); will re-read
+2026-10-15 10:19:15,961 INFO hbpipe.collector: corrupt reply for sensor 1 discarded (crc32 mismatch); will re-read
+2026-10-15 10:19:21,646 INFO hbpipe.collector: corrupt reply for sensor 1 discarded (crc32 mismatch); will re-read
+2026-10-15 10:19:22,824 INFO hbpipe.collector: corrupt reply for sensor 1 discarded (crc32 mismatch); will re-read
+2026-10-15 10:19:26,715 INFO hbpipe.collector: corrupt reply for sensor 2 discarded (crc32 mismatch); will re-read
+2026-10-15 10:19:33,586 INFO hbpipe.collector: corrupt reply for sensor 2 discarded (crc32 mismatch); will re-read
+Killed
+2026-10-15 10:19:48,250 INFO hbpipe.collector: connected to mock 127.0.0.1:7100
+2026-10-15 10:19:50,551 INFO hbpipe.collector: corrupt reply for sensor 2 discarded (crc32 mismatch); will re-read
+2026-10-15 10:19:52,247 INFO hbpipe.uplink: mode -> online (startup)
+2026-10-15 10:19:56,502 INFO hbpipe.collector: corrupt reply for sensor 2 discarded (crc32 mismatch); will re-read
+2026-10-15 10:19:56,871 INFO hbpipe.collector: corrupt reply for sensor 2 discarded (crc32 mismatch); will re-read
+2026-10-15 10:20:01,384 INFO hbpipe.collector: corrupt reply for sensor 2 discarded (crc32 mismatch); will re-read
+2026-10-15 10:20:11,275 INFO hbpipe.collector: corrupt reply for sensor 2 discarded (crc32 mismatch); will re-read
+2026-10-15 10:20:16,654 INFO hbpipe.collector: corrupt reply for sensor 1 discarded (crc32 mismatch); will re-read
+2026-10-15 10:20:18,159 INFO hbpipe.collector: corrupt reply for sensor 2 discarded (crc32 mismatch); will re-read
+2026-10-15 10:20:21,876 INFO hbpipe.collector: corrupt reply for sensor 1 discarded (crc32 mismatch); will re-read
+2026-10-15 10:20:23,283 INFO hbpipe.collector: corrupt reply for sensor 1 discarded (crc32 mismatch); will re-read
+Killed
+2026-10-15 10:20:31,025 INFO hbpipe.collector: connected to mock 127.0.0.1:7100
+2026-10-15 10:20:32,851 INFO hbpipe.uplink: mode -> online (startup)
+2026-10-15 10:20:48,467 INFO hbpipe.collector: corrupt reply for sensor 1 discarded (crc32 mismatch); will re-read
+2026-10-15 10:20:48,872 INFO hbpipe.collector: corrupt reply for sensor 1 discarded (crc32 mismatch); will re-read
+2026-10-15 10:20:50,923 INFO hbpipe.collector: corrupt reply for sensor 2 discarded (crc32 mismatch); will re-read
+2026-10-15 10:20:51,587 INFO hbpipe.collector: corrupt reply for sensor 1 discarded (crc32 mismatch); will re-read
+2026-10-15 10:20:58,129 INFO hbpipe.collector: corrupt reply for sensor 2 discarded (crc32 mismatch); will re-read
+2026-10-15 10:21:02,097 INFO hbpipe.collector: corrupt reply for sensor 1 discarded (crc32 mismatch); will re-read
+2026-10-15 10:21:03,598 INFO hbpipe.collector: corrupt reply for sensor 2 discarded (crc32 mismatch); will re-read
+2026-10-15 10:21:05,806 INFO hbpipe.collector: corrupt reply for sensor 2 discarded (crc32 mismatch); will re-read
+2026-10-15 10:21:06,393 INFO hbpipe.collector: corrupt reply for sensor 1 discarded (crc32 mismatch); will re-read
+Killed
+2026-10-15 10:21:22,357 INFO hbpipe.collector: connected to mock 127.0.0.1:7100
+2026-10-15 10:21:25,759 INFO hbpipe.collector: corrupt reply for sensor 1 discarded (crc32 mismatch); will re-read
+2026-10-15 10:21:26,255 INFO hbpipe.collector: corrupt reply for sensor 1 discarded (crc32 mismatch); will re-read
+2026-10-15 10:21:27,375 INFO hbpipe.uplink: mode -> online (startup)
+2026-10-15 10:21:35,294 INFO hbpipe.collector: corrupt reply for sensor 1 discarded (crc32 mismatch); will re-read
+2026-10-15 10:21:35,769 INFO hbpipe.collector: corrupt reply for sensor 2 discarded (crc32 mismatch); will re-read
+2026-10-15 10:21:36,181 INFO hbpipe.collector: corrupt reply for sensor 2 discarded (crc32 mismatch); will re-read
+2026-10-15 10:21:36,208 INFO hbpipe.collector: corrupt reply for sensor 1 discarded (crc32 mismatch); will re-read
+2026-10-15 10:21:38,490 INFO hbpipe.collector: corrupt reply for sensor 1 discarded (crc32 mismatch); will re-read
+2026-10-15 10:21:47,126 INFO hbpipe.collector: corrupt reply for sensor 1 discarded (crc32 mismatch); will re-read
+2026-10-15 10:21:48,132 INFO hbpipe.collector: corrupt reply for sensor 2 discarded (crc32 mismatch); will re-read
+2026-10-15 10:21:48,246 INFO hbpipe.collector: corrupt reply for sensor 2 discarded (crc32 mismatch); will re-read
+2026-10-15 10:21:49,535 INFO hbpipe.collector: corrupt reply for sensor 1 discarded (crc32 mismatch); will re-read
+2026-10-15 10:21:56,841 INFO hbpipe.collector: corrupt reply for sensor 1 discarded (crc32 mismatch); will re-read
+2026-10-15 10:21:59,924 INFO hbpipe.collector: corrupt reply for sensor 2 discarded (crc32 mismatch); will re-read
+2026-10-15 10:22:00,345 INFO hbpipe.collector: corrupt reply for sensor 1 discarded (crc32 mismatch); will re-read
+2026-10-15 10:22:02,952 INFO hbpipe.collector: corrupt reply for sensor 1 discarded (crc32 mismatch); will re-read
+2026-10-15 10:22:03,316 INFO hbpipe.collector: corrupt reply for sensor 2 discarded (crc32 mismatch); will re-read
+2026-10-15 10:22:04,947 INFO hbpipe.collector: corrupt reply for sensor 1 discarded (crc32 mismatch); will re-read
+2026-10-15 10:22:14,773 INFO hbpipe.collector: corrupt reply for sensor 1 discarded (crc32 mismatch); will re-read
+2026-10-15 10:22:17,778 INFO hbpipe.collector: corrupt reply for sensor 1 discarded (crc32 mismatch); will re-read
+2026-10-15 10:22:18,248 INFO hbpipe.collector: corrupt reply for sensor 2 discarded (crc32 mismatch); will re-read
+2026-10-15 10:22:30,246 INFO hbpipe.collector: corrupt reply for sensor 2 discarded (crc32 mismatch); will re-read
+2026-10-15 10:24:09,131 INFO hbpipe.collector: corrupt reply for sensor 1 discarded (crc32 mismatch); will re-read
+2026-10-15 10:24:14,215 INFO hbpipe.collector: corrupt reply for sensor 1 discarded (crc32 mismatch); will re-read
+2026-10-15 10:25:18,785 INFO hbpipe.collector: corrupt reply for sensor 2 discarded (crc32 mismatch); will re-read
+2026-10-15 10:25:28,180 INFO hbpipe.collector: corrupt reply for sensor 1 discarded (crc32 mismatch); will re-read
+2026-10-15 10:25:28,226 INFO hbpipe.collector: corrupt reply for sensor 1 discarded (crc32 mismatch); will re-read
+2026-10-15 10:26:18,151 INFO hbpipe.collector: corrupt reply for sensor 2 discarded (crc32 mismatch); will re-read
+2026-10-15 10:26:19,178 INFO hbpipe.collector: corrupt reply for sensor 2 discarded (crc32 mismatch); will re-read
+2026-10-15 10:26:25,899 INFO hbpipe.collector: corrupt reply for sensor 1 discarded (crc32 mismatch); will re-read
+2026-10-15 10:27:43,546 INFO hbpipe.collector: corrupt reply for sensor 2 discarded (crc32 mismatch); will re-read
+2026-10-15 10:28:01,204 INFO hbpipe.collector: corrupt reply for sensor 1 discarded (crc32 mismatch); will re-read

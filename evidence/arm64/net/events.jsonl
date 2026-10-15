@@ -1,0 +1,9 @@
+{"event": "start", "wall": 1792083296.703, "mono": 3920.668, "pid": 16}
+{"event": "session_started", "wall": 1792083297.873, "mono": 3921.827, "session": "02283269"}
+{"event": "mode", "wall": 1792083304.866, "mono": 3928.821, "mode": "online", "reason": "startup"}
+{"event": "mode", "wall": 1792083355.403, "mono": 3979.375, "mode": "offline", "reason": "ingest: 2 failures"}
+{"event": "mode", "wall": 1792083382.066, "mono": 4006.036, "mode": "online", "reason": "health: 2 successes"}
+{"event": "mode", "wall": 1792083512.813, "mono": 4136.884, "mode": "offline", "reason": "ingest: 2 failures"}
+{"event": "mode", "wall": 1792083621.715, "mono": 4245.841, "mode": "online", "reason": "health: 2 successes"}
+{"event": "sensor_end", "wall": 1792083693.715, "mono": 4317.9, "session": "02283269", "sensor": 2, "end_index": 160000}
+{"event": "sensor_end", "wall": 1792083693.831, "mono": 4318.016, "session": "02283269", "sensor": 1, "end_index": 160000}

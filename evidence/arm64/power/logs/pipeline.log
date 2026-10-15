@@ -1,0 +1,9 @@
+2026-10-15 17:06:49,913 INFO hbpipe.collector: connected to mock 127.0.0.1:7100
+2026-10-15 17:06:50,064 INFO hbpipe.collector: new mock session 63ca0621
+2026-10-15 17:06:51,850 INFO hbpipe.uplink: mode -> online (startup)
+2026-10-15 17:07:51,744 INFO hbpipe.collector: connected to mock 127.0.0.1:7100
+2026-10-15 17:07:51,915 INFO hbpipe.collector: new mock session e26f418a
+2026-10-15 17:07:53,106 INFO hbpipe.uplink: mode -> online (startup)
+2026-10-15 17:09:12,726 INFO hbpipe.collector: connected to mock 127.0.0.1:7100
+2026-10-15 17:09:12,781 INFO hbpipe.collector: new mock session dc7fbc1d
+2026-10-15 17:09:13,568 INFO hbpipe.uplink: mode -> online (startup)

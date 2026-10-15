@@ -1,0 +1,71 @@
+{
+  "test": "T5: network cut 30 s, then 3 min (iptables DROP)",
+  "switches": [
+    {
+      "cut_s": 30,
+      "offline_after_s": 4.82,
+      "online_after_s": 0.3,
+      "backlog_drained_after_s": 122.6
+    },
+    {
+      "cut_s": 180,
+      "offline_after_s": 3.79,
+      "online_after_s": 0.86,
+      "backlog_drained_after_s": 59.6
+    }
+  ],
+  "backlog_drain_s": 8.1,
+  "final_status": {
+    "mode": "online",
+    "session": "02283269",
+    "samples_saved": 320000,
+    "samples_in_cloud": 320000,
+    "backlog": 0,
+    "losses": 0,
+    "disk_full": false
+  },
+  "sessions": {
+    "02283269": {
+      "PASS": true,
+      "device_equals_cloud": {
+        "file": "C:/Users/hr202/AppData/Local/Temp/hbev8\\net\\cloud-02283269.jsonl",
+        "identical_samples": true,
+        "identical_losses": true
+      },
+      "windows": 400,
+      "windows_without_result": [],
+      "results_by_mode": {
+        "online": 261,
+        "offline": 142
+      },
+      "sensor_1": {
+        "samples": 160000,
+        "wrong_values": 0,
+        "lost_samples": 0,
+        "loss_records": [],
+        "silent_holes": [],
+        "loss_sample_overlaps": 0
+      },
+      "sensor_2": {
+        "samples": 160000,
+        "wrong_values": 0,
+        "lost_samples": 0,
+        "loss_records": [],
+        "silent_holes": [],
+        "loss_sample_overlaps": 0
+      }
+    }
+  },
+  "PASS": true,
+  "log": [
+    "[    0.0s] started: mode=ramp duration=400s mock_args=''",
+    "[   62.2s] network CUT (172.19.0.3)",
+    "[   93.4s] network RESTORED (172.19.0.3)",
+    "[  220.7s] network CUT (172.19.0.3)",
+    "[  332.5s] network RESTORED (172.19.0.3)",
+    "[  414.0s] backlog drained after 8.1 s",
+    "[  674.2s] RESULT PASS",
+    "[  674.2s] cut 30s: {'cut_s': 30, 'offline_after_s': 4.82, 'online_after_s': 0.3, 'backlog_drained_after_s': 122.6}",
+    "[  674.2s] cut 180s: {'cut_s': 180, 'offline_after_s': 3.79, 'online_after_s': 0.86, 'backlog_drained_after_s': 59.6}"
+  ]
+}
