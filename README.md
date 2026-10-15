@@ -1,12 +1,13 @@
 # hbpipe — Never Lose a Heartbeat
 
 A data pipeline for a bedside device on a Raspberry Pi-class ARM64 board. It saves every sample
-from two 400 Hz sensors durably. It streams the data to a free cloud VM, which processes it within
-seconds. When the network drops, the device processes the data itself and then catches up. Every
+from two 400 Hz sensors durably. It streams the data to a free cloud service (Render + Neon Postgres), which processes it
+within seconds. When the network drops, the device processes the data itself and then catches up. Every
 sample that could not be saved is listed with its index range and a reason; no gap is ever filled
 with invented values.
 
-- Design: [docs/DESIGN.md](docs/DESIGN.md) (2-page design note)
+- Design note (2 pages): [docs/design-note.html](docs/design-note.html) (PDF in the submission); long form [docs/DESIGN.md](docs/DESIGN.md)
+- Live cloud: https://hbpipe-cloud.onrender.com (`/health` is public)
 - Plan and requirement traceability: [docs/PLAN.md](docs/PLAN.md)
 - Test evidence: [docs/EVIDENCE.md](docs/EVIDENCE.md)
 
@@ -31,23 +32,23 @@ Check with `curl https://<service>.onrender.com/health`.
 
 ### 2. Device (fresh board)
 ```bash
-git clone <this repo> && cd hbpipe
-sudo ./deploy/install-device.sh https://<your-hostname> <same-token>
+git clone https://github.com/Harsh202458/mayacardio-hbpipe && cd mayacardio-hbpipe
+sudo ./deploy/install-device.sh https://hbpipe-cloud.onrender.com <token>
 ```
 This installs `/usr/local/bin/pipeline` and the `hbpipe.service` systemd unit:
-- the unit restarts within 1 s and starts at boot;
+- the unit restarts within 200 ms (`RestartSec=200ms`) and starts at boot;
 - it is limited to `CPUQuota=400%` and `MemoryMax=2G`;
 - configuration lives in `/etc/hbpipe/pipeline.env`.
 
 ### 2b. Device as an ARM64 container (how our evidence was produced)
 ```bash
 docker build --platform linux/arm64 -f docker/Dockerfile.device -t hbpipe-device .
-docker run -d --name hb-dev --platform linux/arm64 --cpus 4 --memory 2g --cap-add NET_ADMIN \
-  -v hb-data:/data -e HB_CLOUD_URL=https://<service>.onrender.com -e HB_CLOUD_TOKEN=<token> hbpipe-device
+docker run -d --name hb-dev --platform linux/arm64 --cpus 4 --memory 2g \
+  -v hb-data:/data --env-file device.env hbpipe-device     # device.env: HB_CLOUD_URL=..., HB_CLOUD_TOKEN=...
 docker exec hb-dev pipeline status
 ```
-The container runs the mock and a supervisor loop that restarts the pipeline after 1 s, in place
-of systemd. Full failure suite: `python tests/arm64_suite.py kill net power disk clock signal catchup resources`.
+The container runs the mock and a supervisor loop that restarts the pipeline after 0.2 s, in
+place of systemd.
 
 ### 3. Mock
 Run the provided `biosignal-mock` on the same board, e.g.
@@ -70,7 +71,9 @@ journalctl -u hbpipe -f                            # logs
 
 | What | Command | Where |
 |---|---|---|
-| Unit tests (26) | `python3 -m unittest tests.test_protocol tests.test_processing tests.test_collector` | anywhere |
+| Unit tests (31) | `python3 -m unittest tests.test_protocol tests.test_processing tests.test_collector tests.test_store` | anywhere |
+| ARM64 failure suite | `python3 tests/arm64_suite.py kill net power disk clock signal catchup` | Docker Desktop |
+| Against the deployed cloud | `python3 tests/realcloud_check.py --env-file device.env --out DIR` | Docker Desktop |
 | End-to-end: faults, network cut, 2× kill -9 | `python3 tests/e2e_local.py` | anywhere (uses `tools/fake_mock.py`) |
 | End-to-end: mock restart | `python3 tests/e2e_local.py --scenario restart` | anywhere |
 | End-to-end: ECG signal + latency | `python3 tests/e2e_local.py --mode signal` | anywhere |
@@ -95,6 +98,8 @@ hbpipe/cloud/    ingest API, cloud store + online worker
 tools/           fake mock, export verifier, cut proxy, resource monitor, catch-up benchmark
 tests/           unit tests, local end-to-end test, chaos/ failure scripts for the device
 deploy/          systemd units, install scripts, Caddyfile
+docker/          ARM64 device image, cloud image, network-cut helper
+render.yaml      Render Blueprint for the cloud (Neon Postgres via HB_CLOUD_DB)
 ```
 
 ## Free services and open-source software only
