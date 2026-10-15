@@ -13,7 +13,7 @@ from .store import DeviceStore
 
 log = logging.getLogger("hbpipe.processor")
 
-MAX_WINDOWS_PER_TICK = 50
+MAX_WINDOWS_PER_TICK = 10
 
 
 class OfflineProcessor:
@@ -51,6 +51,7 @@ class OfflineProcessor:
                 res = processing.compute_window(
                     lambda s, lo, hi: load_range(self.conn, sid, s, lo, hi), w, "offline")
                 done.append((sid, w, "offline", json.dumps(res)))
+                self.stop.wait(0.02)  # yield: collection and the cloud link come first
                 w += 1
             if done:
                 with transaction(self.conn):

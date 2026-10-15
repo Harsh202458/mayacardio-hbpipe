@@ -22,7 +22,7 @@ from .store import DeviceStore
 log = logging.getLogger("hbpipe.uplink")
 
 PING_INTERVAL = 1.0
-PING_TIMEOUT = 1.5      # per request on an established connection
+PING_TIMEOUT = 2.0      # per request on an established connection
 CONNECT_TIMEOUT = 4.0   # TCP + TLS setup of a new connection
 OFFLINE_AFTER = 5.0     # go offline once nothing has succeeded for this long (and 2+ failures)
 FAILS_TO_OFFLINE = 2
@@ -30,23 +30,6 @@ OKS_TO_ONLINE = 2
 UPLOAD_INTERVAL = 0.5
 
 
-def bounded(fn, timeout: float):
-    """Run fn in a helper thread; give up after `timeout` (covers DNS hangs that ignore
-    socket timeouts). Returns (ok, value)."""
-    box = {}
-
-    def run():
-        try:
-            box["value"] = fn()
-        except Exception as e:  # noqa: BLE001 - any failure means "cloud not reachable"
-            box["error"] = e
-
-    t = threading.Thread(target=run, daemon=True)
-    t.start()
-    t.join(timeout)
-    if t.is_alive() or "error" in box:
-        return False, box.get("error")
-    return True, box.get("value")
 
 
 class CloudClient:
@@ -131,20 +114,23 @@ class CloudClient:
         finally:
             conn.close()
 
+    # Calls run on the caller's thread and are bounded by socket timeouts (connect, then each
+    # read). No helper threads are abandoned: an abandoned call would keep its channel busy and,
+    # on a slow board, every later attempt would fail before it could reconnect.
     def ping(self) -> bool:
-        budget = PING_TIMEOUT + (0.0 if self.connected("ping") else CONNECT_TIMEOUT)
-        ok, _ = bounded(lambda: self.call("GET", "/health", timeout=PING_TIMEOUT, channel="ping"),
-                        budget)
-        return ok
+        try:
+            self.call("GET", "/health", timeout=PING_TIMEOUT, channel="ping")
+            return True
+        except Exception:  # noqa: BLE001 - any failure means "cloud not reachable"
+            return False
 
     def ingest(self, payload: dict, timeout: float):
         body = gzip.compress(json.dumps(payload, separators=(",", ":")).encode("utf-8"), 6)
-        ok, value = bounded(lambda: self.call("POST", "/ingest", body, timeout=timeout,
-                                              headers={"Content-Type": "application/json",
-                                                       "Content-Encoding": "gzip"},
-                                              channel="ingest"),
-                            timeout + CONNECT_TIMEOUT + 1.0)
-        if not ok:
+        try:
+            value = self.call("POST", "/ingest", body, timeout=timeout,
+                              headers={"Content-Type": "application/json",
+                                       "Content-Encoding": "gzip"}, channel="ingest")
+        except Exception:  # noqa: BLE001
             return None
         return json.loads(value)
 
