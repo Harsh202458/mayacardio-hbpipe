@@ -274,12 +274,19 @@ class DeviceStore:
         return row[0] if row else None
 
     def counts(self) -> dict:
-        saved = self.conn.execute("SELECT COALESCE(SUM(count), 0) FROM chunks").fetchone()[0]
-        in_cloud = 0
-        for a, b in self.conn.execute("SELECT id_from, id_to FROM acked").fetchall():
-            in_cloud += self.conn.execute(
-                "SELECT COALESCE(SUM(count), 0) FROM chunks WHERE id >= ? AND id < ?",
-                (a, b)).fetchone()[0]
-        losses = self.conn.execute("SELECT COUNT(*) FROM losses").fetchone()[0]
+        # One read transaction = one consistent snapshot, so an upload acknowledged between
+        # two queries cannot make "in cloud" exceed "saved".
+        c = self.conn
+        c.execute("BEGIN")
+        try:
+            saved = c.execute("SELECT COALESCE(SUM(count), 0) FROM chunks").fetchone()[0]
+            in_cloud = 0
+            for a, b in c.execute("SELECT id_from, id_to FROM acked").fetchall():
+                in_cloud += c.execute(
+                    "SELECT COALESCE(SUM(count), 0) FROM chunks WHERE id >= ? AND id < ?",
+                    (a, b)).fetchone()[0]
+            losses = c.execute("SELECT COUNT(*) FROM losses").fetchone()[0]
+        finally:
+            c.execute("COMMIT")
         return {"samples_saved": saved, "samples_in_cloud": in_cloud,
                 "backlog": saved - in_cloud, "losses": losses}

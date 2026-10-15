@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Design note — Never Lose a Heartbeat</title>
+<style>
+  @page { size: A4; margin: 13mm 14mm; }
+  body { font: 9.4pt/1.32 "Segoe UI", Arial, sans-serif; color: #111; margin: 0; }
+  h1 { font-size: 15pt; margin: 0 0 2px; }
+  .sub { color: #555; font-size: 8.6pt; margin-bottom: 6px; }
+  h2 { font-size: 10.6pt; margin: 8px 0 3px; border-bottom: 1px solid #bbb; padding-bottom: 1px; }
+  p, ul { margin: 2px 0 4px; } ul { padding-left: 16px; } li { margin: 1px 0; }
+  table { border-collapse: collapse; width: 100%; margin: 3px 0 5px; font-size: 8.7pt; }
+  th, td { border: 1px solid #bbb; padding: 2px 5px; vertical-align: top; text-align: left; }
+  th { background: #eee; }
+  pre { font: 7.8pt/1.2 Consolas, monospace; background: #f6f6f6; border: 1px solid #ddd;
+        padding: 4px 6px; margin: 3px 0 5px; white-space: pre; }
+  code { font: 8.4pt Consolas, monospace; }
+  .k { font-weight: 600; } .pb { page-break-before: always; }
+</style></head><body>
+<h1>Never Lose a Heartbeat: design note</h1>
+<div class="sub">hbpipe · code: github.com/Harsh202458/mayacardio-hbpipe · cloud: hbpipe-cloud.onrender.com ·
+device evidence: ARM64 (linux/arm64 Debian 12 container, --cpus 4 --memory 2g)</div>
+
+<h2>1. Architecture</h2>
+<pre>
+ Raspberry Pi 4 / ARM64, ≤4 cores, ≤2 GB                              Free cloud (no card)
+ biosignal-mock :7100 ─TCP─► Collector ──batches──► Writer thread ──► SQLite WAL     Render web service (Ohio)
+                            CRC on raw text,        commit every 200 ms  chunks, losses,   ┌─ Ingest API (idempotent)
+                            from_index re-reads,    data+cursor in ONE   cursors, results  │  INSERT … ON CONFLICT
+                            gap re-reads            transaction, fsync          │          ├─ Online worker
+                            Health/Mode (1 s) ◄──── Uploader (gzip, keep-alive) ┴─HTTPS──► │  same processing.py
+                            Offline worker: same processing.py                             └─ Neon Postgres (free)
+</pre>
+<ul>
+<li><span class="k">Collector</span>: one TCP client polls each sensor every 100 ms and always requests <code>from_index = cursor</code>, so restarts, duplicate and corrupt replies are harmless re-reads. The CRC-32 is checked on the <i>exact</i> <code>data</code> text received (never re-serialised JSON). Every line is applied by its own sensor and index range.</li>
+<li><span class="k">Writer thread</span>: commits batches strictly in order, so a slow fsync (SD cards stall) never stops reading the mock's 10 s buffer.</li>
+<li><span class="k">Uploader</span>: offline results first, then the newest 30 s (live lane), then the backlog oldest-first. Data counts as uploaded only after the cloud has committed and replied. Progress is kept as acknowledged chunk-id ranges, so stored rows are never rewritten.</li>
+<li><span class="k">Mode</span>: health ping every 1 s on a kept-alive connection. Offline after ≥2 failures and 5 s without success; online after 2 successes (pings every 0.5 s while offline). systemd <code>Restart=always, RestartSec=200ms</code>; the collector starts before the cloud code even loads.</li>
+<li><span class="k">Processing</span>: one module, used unchanged online and offline. Window <i>w</i> is computed only when all its inputs are final (data, recorded loss, or past session end), so samples in transit are never counted as missing. The cloud skips windows the device already processed offline.</li>
+</ul>
+
+<h2>2. Why no sample is lost silently</h2>
+<p>For every (session, sensor), the indices <code>[0, cursor)</code> are covered <b>exactly once</b> by stored blocks and recorded losses. Each block or loss is committed in the same transaction as its cursor advance, so this holds after any crash.</p>
+<ul>
+<li><b>Uncommitted data is simply "not read yet":</b> it is re-read after a restart while the mock still holds it.</li>
+<li><b>Unexplained index jump:</b> re-read; recorded as <code>not_delivered_by_mock</code> only after 5 failed re-reads.</li>
+<li><b>New <code>session_id</code>:</b> the old session's unread tail is listed with <code>to_index: null</code>, reason <code>device_power_loss_or_reboot</code> (boot id changed) or <code>mock_restart</code>.</li>
+<li><b>Disk full:</b> release a 16 MB reserve and keep saving; below 4 MB, store only <code>disk_full</code> loss records while still reading the mock; resume when space returns.</li>
+<li><b>Exactly once in the cloud:</b> immutable blocks keyed (session, sensor, first_index) plus ack-after-commit, so re-sends are no-ops.</li>
+<li><b>Nothing is ever interpolated.</b></li>
+</ul>
+
+<h2>3. Guaranteed / not guaranteed</h2>
+<table>
+<tr><th style="width:52%">Guaranteed</th><th>Not guaranteed</th></tr>
+<tr><td>Every sample received from the mock is stored once, unchanged (CRC + range checks)</td><td>Samples the mock never delivered (listed with the mock's reason)</td></tr>
+<tr><td>Every index not stored is listed (sensor, range, reason); export = samples + losses</td><td>The last ≤ 0.5 s before a power cut (listed, not silent)</td></tr>
+<tr><td>Process crash / <code>kill -9</code>: resume from the last commit inside the mock's 10 s buffer</td><td>Restarts slower than 10 s (seen only under ARM emulation; listed as <code>buffer_overflow</code>)</td></tr>
+<tr><td>Mode switch ≤ 10 s each way; no sample lost or duplicated by a switch</td><td>Storage that acknowledges a flush it did not perform</td></tr>
+<tr><td>Same results online and offline (one code path, exact rational rounding)</td><td>Outages longer than free disk (~{{DISK_MB_H}} MB/h written)</td></tr>
+<tr><td>System clock changes have no effect (index ordering, monotonic timers)</td><td>Render free tier cold start (~1 min) if idle &gt; 15 min</td></tr>
+</table>
+
+<h2 class="pb">4. Maximum data loss on a power cut: 0.5 s per sensor</h2>
+<p>When power is cut, the mock dies too. What can be lost is what the mock had produced but we had not yet committed:</p>
+<ul>
+<li>up to one poll interval (0.1 s);</li>
+<li>plus one commit interval (0.2 s);</li>
+<li>plus the fsync time.</li>
+</ul>
+<p>That is ≈ 0.35 s; we state <b>0.5 s</b>. Measured on the ARM64 device (whole container killed, mock included): <b>{{POWER_LOSS}}</b>. These samples appear after reboot as the old session's tail loss (<code>to_index: null</code>). Committing more often lowers the bound at the cost of SD-card writes.</p>
+
+<h2>5. Results logic (section 3)</h2>
+<ul>
+<li><b>Windows:</b> <code>400w…400w+399</code>. Missing counts, per-channel mean/min/max over available samples (<code>null</code> if none); magnitude = mean √(ch1²+ch2²) of sensor 2.</li>
+<li><b>Peaks:</b> the 800 previous samples and the next one are available, strict local maximum, <code>2·x &gt; max(previous 800)</code>, ≥100 after the previous peak (rolling max via a monotonic deque, O(n)).</li>
+<li><b>Heart rate:</b> <code>24000·(k−1)/(last−first)</code> over the peaks in the 5 s span; <code>null</code> if w&lt;4, any sample is missing, or &lt;2 peaks. The chain is warmed up 2000 samples earlier, which matches the full-history chain (unit-tested).</li>
+<li><b>Rounding:</b> half away from zero, on exact rationals.</li>
+<li><b>Check:</b> the ECG mock gives 60/90/72 bpm exactly as scheduled.</li>
+</ul>
+
+<h2>6. Measured (ARM64 device, final code)</h2>
+<table>
+<tr><th>Check</th><th>Result</th></tr>
+{{RESULTS_ROWS}}
+</table>
+
+<h2>7. Resources, 1 h online against the deployed cloud</h2>
+<table>
+<tr><th>Avg CPU (all 4 cores)</th><th>Peak memory</th><th>Disk written</th><th>Network sent</th></tr>
+<tr><td>{{CPU}}</td><td>{{MEM}}</td><td>{{DISK}}</td><td>{{NET}}</td></tr>
+</table>
+<p>Environment: {{ENV}}. Emulation makes CPU figures pessimistic. Natively, the pipeline goes from process start to reading the mock in 0.13–0.36 s.</p>
+
+<h2>8. Assumptions and notes</h2>
+<ul>
+<li><b>Official mock:</b> the mock download link was blank in our copy. We implemented section 6 faithfully (<code>tools/fake_mock.py</code>) plus a ground-truth checker; the pipeline uses only the documented protocol.</li>
+<li><b>Assumed:</b> the peak chain carries across the session; stats fields are <code>mean_1/min_1/max_1/…</code> per-channel lists; windows processed offline are not recomputed online.</li>
+<li><b>Free services only:</b> Render free + Neon free, with no payment method on either. Everything else is open source.</li>
+</ul>
+</body></html>
