@@ -116,6 +116,15 @@ render.yaml      Render Blueprint for the cloud (Neon Postgres via HB_CLOUD_DB)
 
 ## AI disclosure
 
-Developed with the help of **Claude (Anthropic) via Claude Code** for planning, code drafting,
-tests and documentation. Design decisions, test runs and all reported results were reviewed and
-verified by me.
+In line with the assessment rules, I disclose that I used **Claude (Anthropic), through Claude
+Code**, as an AI pair-programming assistant during this assessment.
+
+- **How it was used:** to discuss and refine the architecture, draft and refactor code, write
+  unit and failure tests, and prepare documentation (README, design note, evidence summary).
+- **What I did:** I set the requirements and priorities, made the design trade-offs (for example
+  free-tier Render + Neon instead of a VM, a 200 ms commit interval for a 0.5 s power-cut bound,
+  and an ARM64 container as the Raspberry Pi stand-in), ran every test on the ARM64 environment
+  and the deployed cloud, investigated the failures they exposed, and reviewed the results
+  before submission.
+- **Verification:** every figure reported here comes from tests that were actually run. Logs
+  and summaries are in the evidence folder and can be reproduced with the scripts in `tests/`.
