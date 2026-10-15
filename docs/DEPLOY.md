@@ -12,8 +12,7 @@ needs a card. It takes about 20 minutes.
 
 ## 2. Neon (Postgres database)
 1. Sign up at https://neon.tech with your GitHub account.
-2. Create a project. Region: pick the one closest to Render's **Oregon** or **Frankfurt**,
-   e.g. *AWS US West 2 (Oregon)*. Postgres 16.
+2. Create a project. Region: **AWS US East 2 (Ohio)**, which matches `region: ohio` in `render.yaml`.
 3. Copy the **connection string**. It looks like
    `postgresql://user:password@ep-xxxx.us-west-2.aws.neon.tech/neondb?sslmode=require`.
    Keep it secret.
@@ -23,7 +22,7 @@ needs a card. It takes about 20 minutes.
 2. **New → Blueprint**, select your repository. Render reads `render.yaml`.
 3. When asked for `HB_CLOUD_DB`, paste the Neon connection string.
    `HB_CLOUD_TOKEN` is generated automatically.
-4. Pick the region matching Neon (Oregon), then **Apply**. The first build takes ~3 minutes.
+4. The region (Ohio) comes from `render.yaml`, then **Apply**. The first build takes ~3 minutes.
 5. Open `https://<your-service>.onrender.com/health`. It should return `{"ok": true, ...}`.
 6. In Render → your service → **Environment**, reveal and copy `HB_CLOUD_TOKEN`.
 
