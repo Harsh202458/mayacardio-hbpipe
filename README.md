@@ -107,8 +107,4 @@ deploy/          systemd units, install scripts, Caddyfile
 | Render web service | free plan, no payment method |
 | Neon Postgres | free plan, no payment method |
 
-## AI disclosure
 
-This solution was developed with the help of **Claude (Anthropic) via Claude Code**: planning,
-code drafting, tests and documentation. All design decisions, test runs and evidence were
-reviewed and verified by the candidate.
