@@ -78,12 +78,17 @@ class CloudClient:
             raise OSError(f"{channel} connection busy")
         try:
             conn = self._conns.get(channel)
-            if conn is None:
-                conn = self._conn(CONNECT_TIMEOUT)
-                conn.connect()
-                self._conns[channel] = conn
-            conn.sock.settimeout(timeout)
+            if conn is not None and conn.sock is None:
+                # The server closed the kept-alive connection (http.client then drops the
+                # socket): discard it, or every later call would fail without reconnecting.
+                self._drop(channel)
+                conn = None
             try:
+                if conn is None:
+                    conn = self._conn(CONNECT_TIMEOUT)
+                    conn.connect()
+                    self._conns[channel] = conn
+                conn.sock.settimeout(timeout)
                 return self._exchange(conn, method, path, body, h)
             except Exception:
                 self._drop(channel)
@@ -121,7 +126,8 @@ class CloudClient:
         try:
             self.call("GET", "/health", timeout=PING_TIMEOUT, channel="ping")
             return True
-        except Exception:  # noqa: BLE001 - any failure means "cloud not reachable"
+        except Exception as e:  # noqa: BLE001 - any failure means "cloud not reachable"
+            self._note_failure("health", e)
             return False
 
     def ingest(self, payload: dict, timeout: float):
@@ -130,9 +136,24 @@ class CloudClient:
             value = self.call("POST", "/ingest", body, timeout=timeout,
                               headers={"Content-Type": "application/json",
                                        "Content-Encoding": "gzip"}, channel="ingest")
-        except Exception:  # noqa: BLE001
+        except Exception as e:  # noqa: BLE001
+            self._note_failure("ingest", e)
             return None
         return json.loads(value)
+
+    def reset(self) -> None:
+        """Forget every kept-alive connection (self-healing after a long outage)."""
+        for channel in list(self._conns):
+            with self._locks[channel]:
+                self._drop(channel)
+
+    _last_failure_log = 0.0
+
+    def _note_failure(self, what: str, e: Exception) -> None:
+        now = time.monotonic()
+        if now - self._last_failure_log >= 30:  # at most one line per 30 s
+            self._last_failure_log = now
+            log.warning("cloud %s failed: %s: %s", what, type(e).__name__, str(e)[:200])
 
 
 class ModeManager:
@@ -176,9 +197,17 @@ class ModeManager:
                     self._persist(f"{source}: {self.fails} failures")
 
     def run(self) -> None:
+        last_reset = time.monotonic()
         while not self.stop.is_set():
             started = time.monotonic()
-            self.report(self.client.ping(), "health")
+            try:
+                self.report(self.client.ping(), "health")
+            except Exception:  # noqa: BLE001 - the mode thread must never die
+                log.exception("health check bookkeeping failed")
+            # Self-healing: unreachable for 60 s -> drop all connection state and start fresh.
+            if started - self.last_ok > 60 and started - last_reset > 60:
+                self.client.reset()
+                last_reset = started
             # Ping faster while offline so the switch back online is quick.
             interval = PING_INTERVAL if self.mode == "online" else PING_INTERVAL / 2
             self.stop.wait(max(0.0, interval - (time.monotonic() - started)))
@@ -195,6 +224,14 @@ class Uploader:
         self.conn = store.new_connection()
 
     def run(self) -> None:
+        while not self.stop.is_set():
+            try:
+                self._run()
+            except Exception:  # noqa: BLE001 - the uploader must never die; data stays on disk
+                log.exception("uploader error; retrying")
+                self.stop.wait(1.0)
+
+    def _run(self) -> None:
         last_meta = 0.0
         while not self.stop.is_set():
             if self.mode.mode != "online":
