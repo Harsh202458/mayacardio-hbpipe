@@ -14,5 +14,7 @@ services:
         value: "3.11.9"
       - key: HB_CLOUD_DB          # Neon connection string: postgresql://...?sslmode=require
         sync: false
+      - key: HB_REQUIRE_POSTGRES  # refuse to start without a real Postgres URL
+        value: "1"
       - key: HB_CLOUD_TOKEN       # shared secret, also set on the device
         generateValue: true

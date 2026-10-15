@@ -142,7 +142,14 @@ def main(argv=None) -> int:
     args = p.parse_args(argv)
     logging.basicConfig(level=logging.INFO, stream=sys.stderr,
                         format="%(asctime)s %(levelname)s %(name)s: %(message)s")
-    if not args.db.startswith(("postgres://", "postgresql://")):
+    is_pg = args.db.startswith(("postgres://", "postgresql://"))
+    if os.environ.get("HB_REQUIRE_POSTGRES") == "1" and not is_pg:
+        # Hosted deployments have no persistent disk: never fall back to a throwaway SQLite
+        # file. The value itself is not logged, as it may contain a password.
+        log.error("HB_CLOUD_DB must be a full postgresql://user:password@host/db URL "
+                  "(got a value that is not one); refusing to start")
+        return 2
+    if not is_pg:
         os.makedirs(os.path.dirname(os.path.abspath(args.db)), exist_ok=True)
     store = CloudStore(args.db)
     Handler.store = store
