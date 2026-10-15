@@ -192,43 +192,75 @@ def t_kill(out):
 def t_net(out):
     e = Env("net", out, duration=1000)
     summary = {"test": "T5: network cut 30 s, then 10 min (iptables DROP)", "switches": []}
+    cuts = []
     for start, length in ((60, 30), (200, 600)):
         e.at(start)
         e.net(True)
-        off = e.wait_mode("offline")
+        cut_wall = time.time()        # rule is in place when the helper returns
         e.at(start + length)
         e.net(False)
-        on = e.wait_mode("online")
+        restore_wall = time.time()
         drained = e.wait_backlog(900)
-        e.log(f"cut {length}s: offline after {off}s, online after {on}s, backlog drained {drained}s")
-        summary["switches"].append({"cut_s": length, "offline_after_s": off, "online_after_s": on,
-                                    "catch_up_s": drained})
-        summary["PASS"] = summary.get("PASS", True) and off is not None and off <= 10 \
-            and on is not None and on <= 10
+        cuts.append((length, cut_wall, restore_wall, drained))
     e.at(1005)
-    return e.finish(summary)
+    # Switch delays from the device's own event log (device and host share the Docker VM clock,
+    # measured offset ~0.2 s). Polling `pipeline status` through `docker exec` into the emulated
+    # container adds seconds of overhead, so it is not used for timing.
+    events = dexec("cat /data/events.jsonl")
+    summary = e.finish(summary)
+    modes = [json.loads(l) for l in events.splitlines() if '"event": "mode"' in l]
+    ok = True
+    for length, cut_wall, restore_wall, drained in cuts:
+        off = next((m["wall"] for m in modes if m["mode"] == "offline" and m["wall"] > cut_wall - 1), None)
+        on = next((m["wall"] for m in modes if m["mode"] == "online" and m["wall"] > restore_wall - 1), None)
+        sw = {"cut_s": length,
+              "offline_after_s": None if off is None else round(off - cut_wall, 2),
+              "online_after_s": None if on is None else round(on - restore_wall, 2),
+              "backlog_drained_after_s": drained}
+        summary["switches"].append(sw)
+        e.log(f"cut {length}s: {sw}")
+        ok = ok and sw["offline_after_s"] is not None and sw["offline_after_s"] <= 10 \
+            and sw["online_after_s"] is not None and sw["online_after_s"] <= 10
+    summary["PASS"] = summary["PASS"] and ok
+    with open(os.path.join(e.dir, "summary.json"), "w", encoding="utf-8") as f:
+        json.dump(summary, f, indent=2)
+    return summary
 
 
 def t_power(out):
     e = Env("power", out, duration=200)
-    cuts = []
+    cut_walls = []
     for at in (60, 140):
         e.at(at)
-        st = e.status()
-        produced_est = int((time.time() - e.t0) * 400)
+        cut_walls.append(time.time())
         e.power_cut()
-        cuts.append({"at_s": at, "saved_before": st["samples_saved"], "mock_produced_est": produced_est})
-    e.at(140 + 5 + 205)
-    summary = {"test": "T4: 2 power cuts (docker kill of the whole device incl. mock)", "cuts": cuts}
+    e.at(140 + 5 + 200 + 25)  # last session runs 200 s after an emulated boot of up to ~20 s
+    summary = {"test": "T4: 2 power cuts (docker kill of the whole device incl. mock)"}
     summary = e.finish(summary, expect_total_last=True)
-    # Measured loss per cut = size of the old session's tail loss vs. what the mock had produced.
+    # Measured loss per cut: samples the mock had produced at the cut (from its logged start
+    # time) minus the first index of the old session's recorded tail loss.
+    starts = {}
+    with open(os.path.join(e.dir, "logs", "mock.log"), encoding="utf-8") as f:
+        for line in f:
+            if "session_start" in line:
+                parts = dict(p.split("=") for p in line.split()[2:])
+                starts[parts["id"]] = float(parts["t0_wall"])
     tails = []
     for sid, s in summary["sessions"].items():
         for k in ("sensor_1", "sensor_2"):
             for frm, to, reason in s[k]["loss_records"]:
-                if to is None:
-                    tails.append({"session": sid, "sensor": k, "tail_from": frm, "reason": reason})
+                if to is None and sid in starts:
+                    cut = min((c for c in cut_walls if c > starts[sid]), default=None)
+                    produced = int((cut - starts[sid]) * 400) if cut else None
+                    lost = None if produced is None else produced - frm
+                    tails.append({"session": sid, "sensor": k, "tail_from": frm, "reason": reason,
+                                  "mock_produced_at_cut": produced, "lost_samples": lost,
+                                  "lost_seconds": None if lost is None else round(lost / 400, 3)})
     summary["tail_losses"] = tails
+    worst = max((t["lost_seconds"] for t in tails if t["lost_seconds"] is not None), default=None)
+    summary["worst_power_cut_loss_s"] = worst
+    summary["PASS"] = summary["PASS"] and len(tails) == 4 and worst is not None and worst <= 0.5
+    e.log(f"power-cut tail losses: {tails}")
     with open(os.path.join(e.dir, "summary.json"), "w", encoding="utf-8") as f:
         json.dump(summary, f, indent=2)
     return summary
@@ -236,18 +268,24 @@ def t_power(out):
 
 def t_disk(out):
     e = Env("disk", out, duration=240, tmpfs_mb=64)
+
+    def fill(name, leave_kb):
+        free = int(dexec("df --output=avail -k /data | tail -1"))
+        dexec(f"fallocate -l {max(0, free - leave_kb)}k /data/{name}; df -h /data | tail -1")
+        e.log(f"disk filled with {name}: {leave_kb} KB left")
+
     e.at(60)
-    free = int(dexec("df --output=avail -k /data | tail -1"))
-    dexec(f"fallocate -l {max(0, free - 2048)}k /data/filler || dd if=/dev/zero of=/data/filler bs=1M "
-          f"count={max(0, free // 1024 - 2)} 2>/dev/null; df -h /data | tail -1")
-    e.log("disk filled (2 MB left)")
-    e.at(150)
-    dexec("rm -f /data/filler")
+    fill("filler1", 2048)   # stage 1: reserve released, samples must still be saved
+    e.at(100)
+    fill("filler2", 512)    # stage 2: no room left, samples recorded as disk_full losses
+    e.at(160)
+    dexec("rm -f /data/filler1 /data/filler2")
     e.log("space freed")
     e.at(245)
-    ev = dexec("grep -E '\"disk_full\"|\"disk_recovered\"' /data/events.jsonl", check=False)
-    summary = e.finish({"test": "T7: data dir on 64 MB tmpfs, filled at 60 s, freed at 150 s",
-                        "disk_events": ev.splitlines()})
+    ev = dexec("grep -E '\"disk_low\"|\"disk_full\"|\"disk_recovered\"' /data/events.jsonl", check=False)
+    summary = e.finish({"test": "T7: data dir on 64 MB tmpfs; filled to 2 MB free at 60 s (reserve "
+                                "used, saving continues), to 0.5 MB at 100 s (disk_full losses), "
+                                "freed at 160 s", "disk_events": ev.splitlines()})
     return summary
 
 
@@ -279,8 +317,15 @@ def t_signal(out):
         res = [json.loads(l) for l in f if l.strip()]
     hr = {r["window"]: r["heart_rate"] for r in res}
     summary["heart_rate_samples"] = {w: hr.get(w) for w in (30, 100, 150, 250, 330)}
-    # Latency: processed_at (cloud clock) vs the end of the window on the mock's timeline.
-    lat = sorted(r["processed_at"] - (e.t0 + r["window"] + 1) for r in res
+    # Latency: processed_at (cloud clock) vs the end of the window on the mock's timeline,
+    # anchored at the mock's logged session start (same Docker VM clock).
+    mock_t0 = e.t0
+    with open(os.path.join(e.dir, "logs", "mock.log"), encoding="utf-8") as f:
+        for line in f:
+            if "session_start" in line:
+                mock_t0 = float(dict(p.split("=") for p in line.split()[2:])["t0_wall"])
+    summary["latency_anchor"] = "mock session start" if mock_t0 != e.t0 else "container start"
+    lat = sorted(r["processed_at"] - (mock_t0 + r["window"] + 1) for r in res
                  if r["mode"] == "online" and not 140 <= r["window"] <= 230)
     summary["online_latency_s"] = {"n": len(lat), "median": round(lat[len(lat) // 2], 2),
                                    "p95": round(lat[int(len(lat) * 0.95)], 2), "max": round(lat[-1], 2)}

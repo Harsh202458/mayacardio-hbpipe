@@ -14,6 +14,7 @@ from typing import Optional
 
 from ..common import chunkdb
 from ..common.chunkdb import get_meta, set_meta, transaction
+from ..common.intervals import IntervalSet
 
 DEVICE_SCHEMA = chunkdb.COMMON_SCHEMA + """
 CREATE TABLE IF NOT EXISTS sessions(
@@ -41,7 +42,27 @@ CREATE TABLE IF NOT EXISTS results(
     PRIMARY KEY(session_id, window, mode)
 );
 CREATE INDEX IF NOT EXISTS results_unsent ON results(session_id, window) WHERE uploaded = 0;
+CREATE TABLE IF NOT EXISTS acked(       -- chunk ids [id_from, id_to) confirmed by the cloud
+    id_from INTEGER PRIMARY KEY,
+    id_to INTEGER NOT NULL
+);
 """
+
+
+def _gaps(covered: IntervalSet, lo: int, hi: int) -> list:
+    """Half-open ranges within [lo, hi) not covered by `covered`."""
+    out, cur = [], lo
+    for s, e in zip(covered.starts, covered.ends):
+        if e <= cur:
+            continue
+        if s >= hi:
+            break
+        if s > cur:
+            out.append((cur, s))
+        cur = max(cur, e)
+    if cur < hi:
+        out.append((cur, hi))
+    return out
 
 
 def is_disk_full(exc: BaseException) -> bool:
@@ -79,7 +100,13 @@ class DeviceStore:
             self.conn.executescript(DEVICE_SCHEMA)
 
     def new_connection(self) -> sqlite3.Connection:
-        return chunkdb.connect(self.path)
+        """Connection for the uploader, mode manager and offline processor. Their commits are
+        bookkeeping that is safe to lose in a crash (chunks are re-sent and deduplicated by the
+        cloud; results are recomputed), so they skip the fsync; WAL keeps them consistent.
+        Only the collector's connection (self.conn) commits with synchronous=FULL."""
+        conn = chunkdb.connect(self.path)
+        conn.execute("PRAGMA synchronous=NORMAL")
+        return conn
 
     # ---------------------------------------------------------------- collector side
     def commit(self, b: Batch) -> None:
@@ -160,20 +187,43 @@ class DeviceStore:
             "SELECT session_id, window, mode, body FROM results WHERE uploaded=0 "
             "ORDER BY session_id, window LIMIT ?", (max_results,)).fetchall()
         more_results = len(results) == max_results
-        live = conn.execute(
-            "SELECT id, session_id, sensor, first_index, count, data FROM chunks "
-            "WHERE uploaded=0 ORDER BY id DESC LIMIT ?", (live_chunks,)).fetchall()
+
+        # Unsent chunks = chunk ids not yet in the acknowledged ranges.
+        max_id = conn.execute("SELECT COALESCE(MAX(id), 0) FROM chunks").fetchone()[0]
+        gaps = _gaps(self._acked(conn), 1, max_id + 1)
+        live, need = [], live_chunks          # newest first: keeps online results flowing
+        for a, b in reversed(gaps):
+            take = min(need, b - a)
+            live.append((b - take, b))
+            need -= take
+            if need == 0:
+                break
         backlog = []
-        if not more_results and len(live) == live_chunks:
+        if not more_results and need == 0:
             # Offline results are sent before older data, so the cloud never recomputes
             # windows the device already processed.
-            backlog = conn.execute(
+            limit, need = live[-1][0], backlog_chunks
+            for a, b in gaps:
+                if a >= limit or need == 0:
+                    break
+                take = min(need, min(b, limit) - a)
+                backlog.append((a, a + take))
+                need -= take
+        ranges = backlog + sorted(live)
+        chunks = []
+        for a, b in ranges:
+            chunks += conn.execute(
                 "SELECT id, session_id, sensor, first_index, count, data FROM chunks "
-                "WHERE uploaded=0 AND id < ? ORDER BY id LIMIT ?",
-                (live[-1][0], backlog_chunks)).fetchall()
-        chunks = backlog + live[::-1]
+                "WHERE id >= ? AND id < ? ORDER BY id", (a, b)).fetchall()
         return {"sessions": sessions, "losses": losses, "results": results, "chunks": chunks,
-                "full": bool(backlog) or more_results}
+                "chunk_ranges": ranges, "full": bool(backlog) or more_results}
+
+    @staticmethod
+    def _acked(conn) -> IntervalSet:
+        acked = IntervalSet()
+        for a, b in conn.execute("SELECT id_from, id_to FROM acked"):
+            acked.add(a, b)
+        return acked
 
     @staticmethod
     def upload_payload(device_id: str, batch: dict) -> dict:
@@ -190,8 +240,13 @@ class DeviceStore:
 
     def mark_uploaded(self, conn, batch: dict, done_upto: dict) -> None:
         with transaction(conn):
-            conn.executemany("UPDATE chunks SET uploaded=1 WHERE id=?",
-                             [(r[0],) for r in batch["chunks"]])
+            # Chunk rows are never rewritten: acknowledged ids are kept as a few merged ranges.
+            acked = self._acked(conn)
+            for a, b in batch["chunk_ranges"]:
+                acked.add(a, b)
+            conn.execute("DELETE FROM acked")
+            conn.executemany("INSERT INTO acked(id_from, id_to) VALUES(?, ?)",
+                             list(zip(acked.starts, acked.ends)))
             # Conditional: if a loss/session changed after we read it, it stays un-uploaded.
             conn.executemany(
                 "UPDATE losses SET uploaded=1 WHERE session_id=? AND sensor=? AND from_index=? "
@@ -219,9 +274,12 @@ class DeviceStore:
         return row[0] if row else None
 
     def counts(self) -> dict:
-        saved, in_cloud = self.conn.execute(
-            "SELECT COALESCE(SUM(count), 0), COALESCE(SUM(CASE WHEN uploaded=1 THEN count END), 0) "
-            "FROM chunks").fetchone()
+        saved = self.conn.execute("SELECT COALESCE(SUM(count), 0) FROM chunks").fetchone()[0]
+        in_cloud = 0
+        for a, b in self.conn.execute("SELECT id_from, id_to FROM acked").fetchall():
+            in_cloud += self.conn.execute(
+                "SELECT COALESCE(SUM(count), 0) FROM chunks WHERE id >= ? AND id < ?",
+                (a, b)).fetchone()[0]
         losses = self.conn.execute("SELECT COUNT(*) FROM losses").fetchone()[0]
         return {"samples_saved": saved, "samples_in_cloud": in_cloud,
                 "backlog": saved - in_cloud, "losses": losses}

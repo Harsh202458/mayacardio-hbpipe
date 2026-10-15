@@ -10,7 +10,7 @@ EnvironmentFile=/etc/hbpipe/pipeline.env
 Environment=HB_HOME=/opt/hbpipe
 ExecStart=/usr/local/bin/pipeline run
 Restart=always
-RestartSec=1
+RestartSec=200ms
 # Resource envelope of the brief (criterion 8): at most 4 cores and 2 GB.
 CPUQuota=400%
 MemoryMax=2G

@@ -103,6 +103,41 @@ class CollectorTests(unittest.TestCase):
         self.assertIn('"from_index": 100, "to_index": 299, "reason": "disk_full"', out)
         self.assertEqual(out.count('"index"'), 200)
 
+    def test_writer_thread_commits_batches_in_order(self):
+        c = self.col
+        c._writer = threading.Thread(target=c._writer_loop)
+        c._writer.start()
+        for i in range(20):                  # 20 batches handed to the writer, 50 samples each
+            c.apply(rep("s1", 1, i * 50, (i + 1) * 50))
+            c.apply(rep("s1", 2, i * 50, (i + 1) * 50))
+            c.flush()
+        c._queue.put(None)
+        c._writer.join()
+        self.assertIsNone(c.writer_error)
+        c._writer = None
+        out = self.export("s1")
+        self.assertEqual(out.count('"index"'), 2000)
+        self.assertNotIn("from_index", out)
+        c2 = Collector(self.cfg, self.store, self.events, threading.Event())
+        self.assertEqual((c2.state[1].cursor, c2.state[2].cursor), (1000, 1000))
+
+    def test_disk_space_stages(self):
+        c = self.col
+        c.reserve_used = False
+        free = {"mb": 100.0}
+        c.store.free_mb = lambda: free["mb"]
+        c.store.release_reserve = lambda: None
+        c.store.ensure_reserve = lambda mb: True
+        free["mb"] = 20                     # low: release the reserve, keep saving
+        c._check_disk()
+        self.assertEqual((c.reserve_used, c.disk_full), (True, False))
+        free["mb"] = 3                      # almost none: stop saving samples
+        c._check_disk()
+        self.assertEqual((c.reserve_used, c.disk_full), (True, True))
+        free["mb"] = 60                     # space back: recreate the reserve, resume
+        c._check_disk()
+        self.assertEqual((c.reserve_used, c.disk_full), (False, False))
+
     def test_session_end_means_no_tail_loss(self):
         c = self.col
         c.apply(rep("s1", 1, 0, 100, end=True))

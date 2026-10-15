@@ -148,7 +148,9 @@ class ModeManager:
         while not self.stop.is_set():
             started = time.monotonic()
             self.report(self.client.ping(), "health")
-            self.stop.wait(max(0.0, PING_INTERVAL - (time.monotonic() - started)))
+            # Ping faster while offline so the switch back online is quick.
+            interval = PING_INTERVAL if self.mode == "online" else PING_INTERVAL / 2
+            self.stop.wait(max(0.0, interval - (time.monotonic() - started)))
 
 
 class Uploader:

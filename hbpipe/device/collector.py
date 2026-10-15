@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import logging
 import os
+import queue
 import socket
 import threading
 import time
@@ -62,6 +63,14 @@ class Collector:
         self.sock: Optional[socket.socket] = None
         self.buf = bytearray()
         self.disk_full = False
+        self.reserve_used = False
+        # Set once both sensors return less than a full reply: the mock's buffer has been
+        # drained after a (re)start, so other work may now compete for the CPU.
+        self.caught_up = threading.Event()
+        self._fresh: set = set()
+        self._queue: queue.Queue = queue.Queue()   # batches waiting for the writer, in order
+        self._writer: Optional[threading.Thread] = None
+        self.writer_error: Optional[BaseException] = None
         self.stats = {"replies": 0, "corrupt": 0, "duplicates": 0, "gap_rereads": 0,
                       "bad_lines": 0, "reconnects": 0}
 
@@ -73,7 +82,12 @@ class Collector:
 
     # ================================================================ main loop
     def run(self) -> None:
-        self.store.ensure_reserve(self.cfg.reserve_mb)
+        # No room for the reserve (disk already full at start): run in the low-space stage.
+        self.reserve_used = not self.store.ensure_reserve(self.cfg.reserve_mb)
+        # Commits run on their own thread: a slow fsync must never stop us reading the mock,
+        # whose buffer only holds 10 s.
+        self._writer = threading.Thread(target=self._writer_loop, name="writer", daemon=True)
+        self._writer.start()
         backoff = 0.2
         next_flush = time.monotonic() + self.cfg.commit_interval
         next_disk_check = 0.0
@@ -97,6 +111,10 @@ class Collector:
                 next_flush = now + self.cfg.commit_interval
         self.flush()
         self._disconnect()
+        self._queue.put(None)
+        self._writer.join()
+        if self.writer_error is not None:
+            raise self.writer_error
 
     def _connect(self) -> None:
         s = socket.create_connection((self.cfg.mock_host, self.cfg.mock_port), timeout=2.0)
@@ -129,6 +147,10 @@ class Collector:
                 self.next_poll[sensor] = time.monotonic() + self.cfg.poll_interval
                 continue
             self.timeouts = 0
+            if got < MAX_CHUNK and not self.caught_up.is_set():
+                self._fresh.add(sensor)
+                if len(self._fresh) == len(SENSORS):
+                    self.caught_up.set()
             st = self.state[sensor]
             if got >= MAX_CHUNK or st.gap_at is not None:
                 delay = 0.0                       # catching up or re-reading: ask again now
@@ -306,9 +328,30 @@ class Collector:
             self.batch.chunks.append((self.session, sensor, start + off, len(part), pack(part)))
 
     def flush(self) -> None:
+        """Hand the current batch to the writer (or commit it here when no writer runs)."""
         if self.batch.empty():
             return
         batch, self.batch = self.batch, Batch()
+        if self._writer is None:
+            self._commit(batch)
+        else:
+            self._queue.put(batch)
+
+    def _writer_loop(self) -> None:
+        while True:
+            batch = self._queue.get()
+            if batch is None:
+                return
+            try:
+                self._commit(batch)
+            except BaseException as e:  # noqa: BLE001 - stop the pipeline; systemd restarts it
+                log.exception("commit failed")
+                self.writer_error = e
+                self.stop.set()
+                return
+
+    def _commit(self, batch: Batch) -> None:
+        """Commit one batch atomically. Batches are committed strictly in order."""
         try:
             self.store.commit(batch)
             return
@@ -317,7 +360,7 @@ class Collector:
                 raise
             log.error("disk full while committing: %s", e)
         # Free the reserve and retry: normally the pending samples still fit.
-        self._enter_disk_full()
+        self._use_reserve()
         try:
             self.store.commit(batch)
             return
@@ -325,8 +368,9 @@ class Collector:
             if not is_disk_full(e):
                 raise
         # Still no room: keep the cursors and record the samples as lost instead.
+        self._enter_disk_full()
         lossy = Batch(new_sessions=batch.new_sessions, losses=dict(batch.losses),
-                      cursors=batch.cursors, ends=batch.ends, meta=batch.meta)
+                      cursors=batch.cursors, ends=batch.ends, meta=dict(batch.meta, disk_full=1))
         for sid, sensor, first, count, _blob in batch.chunks:
             lossy.losses[(sid, sensor, first)] = (first + count - 1, "disk_full")
         try:
@@ -339,10 +383,20 @@ class Collector:
             log.critical("cannot write even loss records; dropping uncommitted state")
             raise SystemExit(75)
 
+    # Disk space, in two stages:
+    #   1. low space   -> release the reserve file and keep saving samples into that space;
+    #   2. almost none -> stop saving samples, record them as `disk_full` losses (tiny rows).
+    # Both stages end when space returns and the reserve can be recreated.
+    def _use_reserve(self) -> None:
+        if not self.reserve_used:
+            self.reserve_used = True
+            self.store.release_reserve()
+            self.events.write("disk_low", free_mb=round(self.store.free_mb(), 1))
+
     def _enter_disk_full(self) -> None:
+        self._use_reserve()
         if not self.disk_full:
             self.disk_full = True
-            self.store.release_reserve()
             self.batch.meta["disk_full"] = 1
             self.events.write("disk_full", free_mb=round(self.store.free_mb(), 1))
 
@@ -351,10 +405,14 @@ class Collector:
             free = self.store.free_mb()
         except OSError:
             return
-        if not self.disk_full and free < self.cfg.low_water_mb:
+        if not self.reserve_used and free < self.cfg.low_water_mb:
+            self._use_reserve()
+        elif self.reserve_used and not self.disk_full and free < self.cfg.hard_min_mb:
             self._enter_disk_full()
-        elif self.disk_full and free > self.cfg.reserve_mb + self.cfg.low_water_mb + 8:
+        elif self.reserve_used and free > self.cfg.reserve_mb + self.cfg.low_water_mb + 8:
             if self.store.ensure_reserve(self.cfg.reserve_mb):
-                self.disk_full = False
-                self.batch.meta["disk_full"] = 0
+                self.reserve_used = False
+                if self.disk_full:
+                    self.disk_full = False
+                    self.batch.meta["disk_full"] = 0
                 self.events.write("disk_recovered", free_mb=round(free, 1))

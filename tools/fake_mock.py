@@ -10,6 +10,7 @@ import argparse
 import bisect
 import json
 import math
+import os
 import random
 import socket
 import sys
@@ -74,8 +75,11 @@ def make_truth(mode: str, seed: int, total: int):
 # ----------------------------------------------------------------------------- server
 class Session:
     def __init__(self, args, rng):
-        self.id = "%08x" % rng.getrandbits(32)
+        # Like the real mock: a new session id on every (re)start, never repeated, independent
+        # of the seeded fault generator.
+        self.id = os.urandom(4).hex()
         self.t0 = time.monotonic()
+        print(f"[fake-mock] session_start id={self.id} t0_wall={time.time():.3f}", flush=True)
         self.total = args.duration * SR
         self.ptr = {1: 0, 2: 0}
         self.values = make_truth(args.mode, args.seed, self.total)

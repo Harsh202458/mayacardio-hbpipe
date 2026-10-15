@@ -17,12 +17,20 @@
   `from_index = cursor`. The CRC is checked on the **raw `data` text** of the received line, never
   on re-serialised JSON. Every line is applied by its own sensor and index range, so duplicate,
   late and corrupt replies are harmless.
-- **Store:** SQLite in WAL mode with `synchronous=FULL`. Samples are stored as immutable blocks
-  of ≤ 400 samples (packed int32). The chunks, loss records and cursor advances read since the
-  last commit are written **in one transaction every 200 ms**.
+- **Store:** SQLite in WAL mode with 1 KB pages. Samples are stored as immutable blocks of
+  ≤ 400 samples (packed int32). The chunks, loss records and cursor advances read since the
+  last commit are written **in one transaction every 200 ms**, with `synchronous=FULL`
+  (fsync per commit).
+  - A dedicated writer thread commits the batches strictly in order, so a slow fsync (SD cards
+    stall) never stops the collector reading the mock's 10 s buffer.
+  - Only this collector connection fsyncs. Upload and processing bookkeeping is safe to
+    lose in a crash, so it does not fsync.
+  - Upload progress is a few merged ranges of chunk ids, so stored chunks are never rewritten.
 - **Uploader:** sends gzip JSON batches every 0.5 s. Order of priority: session ends, losses,
-  offline results, the newest 30 s of data, then the backlog oldest-first. A block is marked
+  offline results, the newest 30 s of data, then the backlog oldest-first. A block counts as
   uploaded only **after** the cloud has committed it and replied.
+- **Restart:** systemd `Restart=always`, `RestartSec=200ms`. The collector connects to the mock
+  before the cloud code is even imported. Bytecode is precompiled at install time.
 - **Mode manager:** health ping every 1 s with a hard 1.5 s deadline. 3 failures → offline;
   2 successes → online.
 - **Processing:** one module (`processing.py`) used unchanged by the device (offline) and the
@@ -40,8 +48,12 @@ holds after any crash.
   (`not_delivered_by_mock`) only after 5 failed re-reads.
 - A new `session_id` closes the old session: its unread tail is listed with `to_index: null`.
   The reason is `device_power_loss_or_reboot` if the Linux boot id changed, else `mock_restart`.
-- On disk full, a 16 MB reserve file is released, so loss records (`disk_full`) can still be
-  written while the mock keeps being read. Saving resumes when space returns.
+- **Disk full, in two stages.**
+  1. Below 24 MB free: release the 16 MB reserve file and **keep saving** into that space
+     (≈ 25 min of data).
+  2. Below 4 MB: store only tiny `disk_full` loss records while the mock keeps being read.
+
+  When space returns, the reserve is recreated and saving resumes.
 
 **Exactly once in the cloud:** blocks are immutable and keyed (session, sensor, first_index), and
 the cloud does `INSERT OR IGNORE`. A crash between the cloud's commit and the device's ack only

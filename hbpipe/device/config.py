@@ -20,7 +20,8 @@ class Config:
     commit_interval: float = 0.2    # seconds between durable commits (bounds power-cut loss)
     reply_timeout: float = 2.0
     reserve_mb: int = 16            # disk space kept back for loss records when the disk fills
-    low_water_mb: int = 24          # enter disk-full mode below this much free space
+    low_water_mb: int = 24          # below this: release the reserve and keep saving into it
+    hard_min_mb: int = 4            # below this: stop saving samples, record disk_full losses
 
     @property
     def db_path(self) -> str:

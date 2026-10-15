@@ -16,10 +16,8 @@ CREATE TABLE IF NOT EXISTS chunks(
     first_index INTEGER NOT NULL,
     count INTEGER NOT NULL,
     data BLOB NOT NULL,
-    uploaded INTEGER NOT NULL DEFAULT 0,
     UNIQUE(session_id, sensor, first_index)
 );
-CREATE INDEX IF NOT EXISTS chunks_unsent ON chunks(id) WHERE uploaded = 0;
 CREATE TABLE IF NOT EXISTS losses(
     session_id TEXT NOT NULL,
     sensor INTEGER NOT NULL,
@@ -39,6 +37,9 @@ def connect(path: str, readonly: bool = False) -> sqlite3.Connection:
                                check_same_thread=False, timeout=30)
     else:
         conn = sqlite3.connect(path, isolation_level=None, check_same_thread=False, timeout=30)
+        # Small pages: each 200 ms commit rewrites ~4 pages, so 1 KB pages write ~4x less to
+        # the SD card than the 4 KB default. Takes effect only when the database is created.
+        conn.execute("PRAGMA page_size=1024")
         conn.execute("PRAGMA journal_mode=WAL")
         conn.execute("PRAGMA synchronous=FULL")
     conn.execute("PRAGMA busy_timeout=30000")

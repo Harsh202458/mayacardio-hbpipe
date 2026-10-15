@@ -49,7 +49,9 @@ def cmd_run(cfg: Config, _args=None) -> int:
     ct = threading.Thread(target=collect, name="collector")
     ct.start()
 
-    # Cloud link and offline processing start once collection is already running.
+    # Cloud link and offline processing start only once the collector has drained the mock's
+    # buffer (or after 15 s), so after a crash nothing competes with catching up.
+    collector.caught_up.wait(15)
     from .processor import OfflineProcessor
     if cfg.cloud_url:
         from .uplink import CloudClient, ModeManager, Uploader
