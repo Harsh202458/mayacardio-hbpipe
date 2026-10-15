@@ -31,7 +31,29 @@
 | R | **1 h online against the deployed cloud** | see below | |
 
 ## Resource figures: 1 hour, online mode, ARM64 device → Render + Neon
-{{RESOURCES}}
+Measured **2026-10-15 23:02:58 → 2026-10-16 00:03:28** (3,605 s) with `tools/resource_monitor.py`, sampling every 10 s.
+- **Device:** linux/arm64 Debian 12 container, `--cpus 4 --memory 2g`, QEMU-emulated on an x86-64 Windows PC.
+- **Cloud:** https://hbpipe-cloud.onrender.com (Render free, Ohio) with Neon Postgres (free, us-east-2).
+- **Signal:** ECG mock, online mode for the whole hour.
+
+| Figure | Pipeline process | Whole device container (pipeline + mock + supervisor) |
+|---|---|---|
+| Average CPU (share of all 4 cores) | **5.7 %** (22.6 % of one core) | 15.8 % (63.4 % of one core) |
+| Peak memory | **83 MB** | 252 MB |
+| Disk written | n/a (no per-task I/O accounting in this kernel) | **263 MB** |
+| Network sent (interface) | **27.3 MB** | |
+
+- **Data:** 2,918,751 samples saved; all but the last ~0.4 s were in the cloud at the end (backlog 607). The mode stayed **online** for the whole hour (the event log shows no switch).
+- **Online latency, device in India to the Render cloud in Ohio:**
+  - cloud `processed_at` vs the end of each second on the mock's clock;
+  - 3,696 windows: median **1.13 s**, p95 4.32 s, **96 % within 5 s**.
+- **Disturbances:** the slower windows (up to 15 s), plus **13 short `buffer_overflow` gaps (2,478 samples, all listed, none silent)**, happened only in short bursts:
+  - at 23:20, 23:30, 23:35–23:42, 23:50 and 00:00;
+  - each time while a **second emulated ARM device** was started, network-cut, killed or power-cut on the same PC to record the demo video, so the two competed for the emulated CPU;
+  - plus the first 10 s of startup.
+
+  A real Raspberry Pi runs one device natively and does not see this contention.
+- **Files:** `4_resources/resources-1h.json`, `status-start.json`, `status-end.json`, `events.jsonl`.
 
 ## Supporting measurements
 - **Native restart** (x86, no emulation): process start → reading the mock in **0.13–0.36 s**.

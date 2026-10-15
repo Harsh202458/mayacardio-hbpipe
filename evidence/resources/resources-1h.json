@@ -1,0 +1,23 @@
+{
+  "environment": {
+    "machine": "aarch64",
+    "kernel": "6.18.54.1-microsoft-standard-WSL2",
+    "cpus_visible": 4,
+    "node": "8ebbbf481416"
+  },
+  "seconds": 3605,
+  "process": {
+    "avg_cpu_percent_of_one_core": 22.64,
+    "avg_cpu_percent_of_all_cores": 5.66,
+    "peak_memory_mb": 83.2,
+    "disk_written_mb": null
+  },
+  "network_sent_mb": 27.33,
+  "cgroup": {
+    "scope": "whole cgroup (in Docker: pipeline + mock + supervisor)",
+    "avg_cpu_percent_of_one_core": 63.37,
+    "avg_cpu_percent_of_all_cores": 15.84,
+    "peak_memory_mb": 252.49,
+    "disk_written_mb": 262.59
+  }
+}

@@ -55,7 +55,7 @@ device evidence: ARM64 (linux/arm64 Debian 12 container, --cpus 4 --memory 2g)</
 <tr><td>Every index not stored is listed (sensor, range, reason); export = samples + losses</td><td>The last ≤ 0.5 s before a power cut (listed, not silent)</td></tr>
 <tr><td>Process crash / <code>kill -9</code>: resume from the last commit inside the mock's 10 s buffer</td><td>Restarts slower than 10 s (seen only under ARM emulation; listed as <code>buffer_overflow</code>)</td></tr>
 <tr><td>Mode switch ≤ 10 s each way; no sample lost or duplicated by a switch</td><td>Storage that acknowledges a flush it did not perform</td></tr>
-<tr><td>Same results online and offline (one code path, exact rational rounding)</td><td>Outages longer than free disk (~{{DISK_MB_H}} MB/h written)</td></tr>
+<tr><td>Same results online and offline (one code path, exact rational rounding)</td><td>Outages longer than free disk (~263 MB/h written)</td></tr>
 <tr><td>System clock changes have no effect (index ordering, monotonic timers)</td><td>Render free tier cold start (~1 min) if idle &gt; 15 min</td></tr>
 </table>
 
@@ -92,9 +92,9 @@ device evidence: ARM64 (linux/arm64 Debian 12 container, --cpus 4 --memory 2g)</
 <h2>7. Resources, 1 h online against the deployed cloud</h2>
 <table>
 <tr><th>Avg CPU (all 4 cores)</th><th>Peak memory</th><th>Disk written</th><th>Network sent</th></tr>
-<tr><td>{{CPU}}</td><td>{{MEM}}</td><td>{{DISK}}</td><td>{{NET}}</td></tr>
+<tr><td>5.7 % pipeline · 15.8 % whole device (incl. mock)</td><td>83 MB pipeline · 252 MB whole device</td><td>263 MB / h (whole device)</td><td>27.3 MB / h</td></tr>
 </table>
-<p>Environment: {{ENV}}. Emulation makes CPU figures pessimistic. Natively, the pipeline goes from process start to reading the mock in 0.13–0.36 s.</p>
+<p>Environment: linux/arm64 Debian 12 container (QEMU-emulated on an x86-64 Windows PC), --cpus 4 --memory 2g; cloud Render free (Ohio) + Neon free; device in India. 2.92 M samples streamed; online latency over the internet: median 1.1 s, p95 4.3 s, 96 % of windows within 5 s. The slower windows and 13 brief <code>buffer_overflow</code> gaps (2,478 samples, all listed) occurred only in short bursts while a second emulated device ran on the same PC to record the demo video. Emulation makes CPU figures pessimistic. Natively, the pipeline goes from process start to reading the mock in 0.13–0.36 s.</p>
 
 <h2>8. Assumptions and notes</h2>
 <ul>
